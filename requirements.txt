@@ -1,0 +1,9 @@
+segmentation_models_pytorch
+numpy 
+scikit-learn 
+matplotlib 
+pandas
+torchmetrics
+wandb
+torchinfo
+albumentations

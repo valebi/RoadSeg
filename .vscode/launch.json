@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Valentin local debug",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "justMyCode": true,
+            "args": [
+                "--device",
+                "cpu",
+                "--smp_backbone",
+                "timm-regnety_002",
+                "--train_batch_size",
+                "2",
+                "--val_batch_size",
+                "2",
+                "--debug",
+                "--wandb"
+            ]
+        }
+    ]
+}
