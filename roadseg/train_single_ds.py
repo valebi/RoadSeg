@@ -289,7 +289,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             num_epochs=CFG.finetuning_epochs,
         )
 
-        generate_predictions(model, fold, CFG)
+        generate_predictions(model, CFG, fold=fold)
 
         fig, ax = plt.subplots(1, 1, figsize=(10, 4))
         ax.set_title("Finetuning fold {}".format(fold))
