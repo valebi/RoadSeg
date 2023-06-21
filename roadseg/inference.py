@@ -18,7 +18,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     img_files = [f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")]
     imgs = [np.array(Image.open(os.path.join(CFG.test_imgs_dir, f)))[:, :, :3] for f in img_files]
 
-    model.to("cpu")  # cpu can work with large "batch"
+    model.to(CFG.device)
     model.eval()
 
     dirname = os.path.join(CFG.out_dir, f"fold-{fold}")
@@ -26,7 +26,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     imgs = np.asarray(imgs).transpose([0, 3, 1, 2]).astype(np.float32)
     imgs /= 255.0
 
-    pred = model(torch.tensor(imgs).to("cpu"))
+    pred = model(torch.tensor(imgs).to(CFG.device))
     pred = torch.nn.functional.softmax(pred, dim=1)
     pred = pred.numpy()[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
