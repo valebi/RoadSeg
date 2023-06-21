@@ -3,10 +3,11 @@ import logging
 import time
 from argparse import Namespace
 
+from torchsummary import summary
+
 from roadseg.datasets.dataloaders import get_dataloaders
 from roadseg.model.smp_models import build_model
 from roadseg.train_single_ds import evaluate_finetuning, pretrain_model
-from roadseg.utils.args import parse_args
 from roadseg.utils.augmentations import get_albumentations
 from roadseg.utils.plots import plot_batch
 from roadseg.utils.utils import finalize, setup
@@ -19,7 +20,9 @@ def main(CFG: Namespace):
     transforms = get_albumentations(CFG)
     train_loader, val_loader, test_splits, n_train_samples = get_dataloaders(CFG, transforms)
 
-    print(f"Training on {n_train_samples} samples")
+    model = build_model(CFG, num_classes=2)
+
+    logging.info(f"Training on {n_train_samples} samples")
     imgs, msks = next(iter(train_loader))
     plot_batch(
         imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="train", log_dir=CFG.log_dir
@@ -29,9 +32,13 @@ def main(CFG: Namespace):
         imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="comp", log_dir=CFG.log_dir
     )
 
-    model = build_model(CFG, num_classes=2)
+    if CFG.debug:
+        summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
-    model = pretrain_model(CFG, model, train_loader, val_loader, n_train_samples=n_train_samples)
+    if len(CFG.datasets) > 0:
+        model = pretrain_model(
+            CFG, model, train_loader, val_loader, n_train_samples=n_train_samples
+        )
 
     avg_f1 = evaluate_finetuning(model, test_splits, CFG, n_comp_samples=144)
 

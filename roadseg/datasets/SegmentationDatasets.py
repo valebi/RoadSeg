@@ -38,7 +38,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
         img = cv2.imread(self.img_paths[index])
         msk = cv2.imread(self.msk_paths[index])
 
-        # print(img.shape, msk.shape, img.dtype, msk.dtype, img.max(), msk.max(), img.min(), msk.min())
+        # logging.info(img.shape, msk.shape, img.dtype, msk.dtype, img.max(), msk.max(), img.min(), msk.min())
 
         # remove / reorder labels to map them to 0 = BG, 255 = ROAD
         if self.label_transform is not None:
@@ -80,13 +80,16 @@ class MaptilerDataset(SegmentationDataset):
             f.replace("images", "masks").replace(".jpg", ".png") for f in self.img_paths
         ]
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
-            *CFG.img_size,
+            CFG.img_size,
+            CFG.img_size,
             scale=(0.85, 1.15),
             ratio=(0.75, 1.3333333333333333),
-            interpolation=cv2.INTER_LINEAR
+            interpolation=cv2.INTER_LINEAR,
         )
-        self.label_transform = lambda msk: (msk == 0).astype(np.uint8) * 255
         self._ensure_size()
+
+    def label_transform(self, msk):
+        return (msk == 0).astype(np.uint8) * 255
 
 
 class HofmannDataset(SegmentationDataset):
@@ -95,13 +98,16 @@ class HofmannDataset(SegmentationDataset):
         self.img_paths = glob(CFG.data_dir + "/roadseg-download-openstreetmap/images/*.png")
         self.msk_paths = [f.replace("images", "labels") for f in self.img_paths]
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
-            *CFG.img_size,
+            CFG.img_size,
+            CFG.img_size,
             scale=(0.3, 0.5),
             ratio=(0.75, 1.3333333333333333),
-            interpolation=cv2.INTER_LINEAR
+            interpolation=cv2.INTER_LINEAR,
         )
-        self.label_transform = lambda msk: 255 - msk[:, :, 2:]
         self._ensure_size()
+
+    def label_transform(self, msk):
+        return 255 - msk[:, :, 2:]
 
 
 class ESRIDataset(SegmentationDataset):
@@ -114,13 +120,16 @@ class ESRIDataset(SegmentationDataset):
             f.replace("images", "masks").replace(".jpg", ".png") for f in self.img_paths
         ]
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
-            *CFG.img_size,
+            CFG.img_size,
+            CFG.img_size,
             scale=(0.7, 1.0),
             ratio=(0.75, 1.3333333333333333),
-            interpolation=cv2.INTER_LINEAR
+            interpolation=cv2.INTER_LINEAR,
         )
-        self.label_transform = lambda msk: (msk == 0).astype(np.uint8) * 255
         self._ensure_size()
+
+    def label_transform(self, msk):
+        return (msk == 0).astype(np.uint8) * 255
 
 
 class CIL23Dataset(SegmentationDataset):
@@ -152,10 +161,11 @@ class BingDataset(SegmentationDataset):
         ]
         self.msk_paths = [f.replace("sat", "label") for f in self.img_paths]
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
-            *CFG.img_size,
+            CFG.img_size,
+            CFG.img_size,
             scale=(0.85, 1.15),
             ratio=(0.75, 1.3333333333333333),
-            interpolation=cv2.INTER_LINEAR
+            interpolation=cv2.INTER_LINEAR,
         )
         self._ensure_size()
 

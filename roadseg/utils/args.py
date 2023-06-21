@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--datasets",
         nargs="+",
-        default=["cil"],
+        default=["hofmann"],
         type=str,
         choices=["cil", "hofmann", "maptiler", "esri", "bing"],
         help="Datasets to use for pretraining.",
@@ -123,12 +123,6 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=400,
         help="Size of input images. Square images are assumed.",
-    )
-    parser.add_argument(
-        "--pretrain",
-        type=bool,
-        default=True,
-        help="Whether to pretrain the model.",
     )
     parser.add_argument(
         "--pretraining_epochs",

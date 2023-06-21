@@ -12,11 +12,11 @@
                 "--smp_backbone",
                 "timm-regnety_002",
                 "--train_batch_size",
-                "2",
+                "16",
                 "--val_batch_size",
-                "2",
-                "--max_per_dataset",
-                "4",
+                "16",
+                "--datasets",
+                "hofmann",
                 "--debug",
                 "--wandb"
             ]

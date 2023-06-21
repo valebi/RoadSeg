@@ -5,5 +5,5 @@ matplotlib
 pandas
 torchmetrics
 wandb
-torchinfo
+torchsummary
 albumentations

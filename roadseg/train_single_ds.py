@@ -2,6 +2,7 @@
 
 import copy
 import gc
+import logging
 import os
 import time
 from collections import defaultdict
@@ -14,7 +15,6 @@ import wandb
 from sklearn.model_selection import KFold, StratifiedGroupKFold, StratifiedKFold
 from torch.cuda import amp
 from torch.utils.data import DataLoader, Dataset
-from torchinfo import summary
 from tqdm import tqdm
 
 from roadseg.model.metrics import (
@@ -104,7 +104,7 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion):
 
         epoch_loss = running_loss / dataset_size
 
-        # print("Before", y_pred.shape)
+        # logging.info("Before", y_pred.shape)
         y_pred = torch.nn.functional.softmax(y_pred, dim=1)[:, 1]
         val_prec = precision(y_pred.cpu(), masks.cpu())
         val_rec = recall(y_pred.cpu(), masks.cpu())
@@ -144,7 +144,7 @@ def run_training(
     # To automatically log gradients
 
     if torch.cuda.is_available():
-        print("cuda: {}\n".format(torch.cuda.get_device_name()))
+        logging.info("cuda: {}\n".format(torch.cuda.get_device_name()))
 
     start = time.time()
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -156,7 +156,7 @@ def run_training(
 
     for epoch in range(1, num_epochs + 1):
         gc.collect()
-        print(f"Epoch {epoch}/{num_epochs}", end="")
+        logging.info(f"Epoch {epoch}/{num_epochs}")
         train_loss = train_one_epoch(
             model,
             optimizer,
@@ -175,7 +175,7 @@ def run_training(
             plot_batch(
                 last_in.cpu().numpy(),
                 last_msk.cpu().numpy(),
-                preds=last_pred.cpu().numpy(),
+                pred=last_pred.cpu().numpy(),
                 src=f"val-epoch-{epoch}",
                 log_dir=log_dir,
             )
@@ -195,36 +195,38 @@ def run_training(
             wandb.log({f"{model_name} Train Loss": train_loss}, step=global_step)
             wandb.log({f"{model_name} Valid Loss": val_loss}, step=global_step)
             wandb.log({f"{model_name} Valid F1": val_f1}, step=global_step)
+            wandb.log({f"{model_name} Valid Precision": val_precision}, step=global_step)
+            wandb.log({f"{model_name} Valid Recall": val_recall}, step=global_step)
             wandb.log(
                 {f"{model_name} Valid Precision": val_precision, "Valid Recall": val_recall},
                 step=global_step,
             )
             wandb.log({f"{model_name} Epoch": epoch}, step=global_step)
 
-        print(
+        logging.info(
             f"Valid Loss: {val_loss:0.4f} | Valid F1: {val_f1:0.4f} | Valid Precision: {val_precision:0.4f} | Valid Recall: {val_recall:0.4f}"
         )
 
         # deep copy the model
         if val_loss <= best_loss:
-            print(f"Valid Score Improved ({best_loss:0.4f} ---> {val_loss:0.4f})")
+            logging.info(f"Valid Score Improved ({best_loss:0.4f} ---> {val_loss:0.4f})")
             best_loss = val_loss
             best_model_wts = copy.deepcopy(model.state_dict())
             PATH = os.path.join(log_dir, "weights", f"best_epoch-{model_name}.bin")
             torch.save(model.state_dict(), PATH)
-            print(f"Model Saved under {PATH}")
+            logging.info(f"Model Saved under {PATH}")
 
         PATH = os.path.join(log_dir, "weights", f"last_epoch-{model_name}.bin")
         torch.save(model.state_dict(), PATH)
 
     end = time.time()
     time_elapsed = end - start
-    print(
+    logging.info(
         "Training complete in {:.0f}h {:.0f}m {:.0f}s".format(
             time_elapsed // 3600, (time_elapsed % 3600) // 60, (time_elapsed % 3600) % 60
         )
     )
-    print("Best Score: {:.4f}".format(best_loss))
+    logging.info("Best Score: {:.4f}".format(best_loss))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
@@ -235,7 +237,9 @@ def run_training(
 def pretrain_model(CFG, model, train_loader, val_loader, n_train_samples=None):
     model_name = f"pretrain"
     optimizer = optim.Adam(model.parameters(), lr=CFG.pretraining_lr, weight_decay=CFG.weight_decay)
-    scheduler = fetch_scheduler(optimizer, CFG, n_train_samples)
+    scheduler = fetch_scheduler(optimizer, CFG, n_train_samples=len(train_loader))
+    if CFG.wandb:
+        wandb.watch(model, criterion=BCELoss, log_freq=100)
     model, history_pre = run_training(
         model,
         model_name,
@@ -256,7 +260,7 @@ def pretrain_model(CFG, model, train_loader, val_loader, n_train_samples=None):
     ax.plot(history_pre["Valid Loss"])
     ax.legend(["train loss", "val loss"])
     fig.savefig(os.path.join(CFG.log_dir, f"pretraining_loss.png"))
-    plt.show()
+    # plt.show()
     return model
 
 
@@ -268,7 +272,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG, n_comp_samples=None)
         optimizer = optim.Adam(
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
         )
-        scheduler = fetch_scheduler(optimizer, CFG=CFG, n_train_samples=n_comp_samples)
+        scheduler = fetch_scheduler(optimizer, CFG=CFG, n_train_samples=len(train_loader))
         model, history = run_training(
             model,
             model_name,
@@ -289,8 +293,8 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG, n_comp_samples=None)
         ax.plot(history["Valid Loss"])
         ax.legend(["train loss", "val loss"])
         fig.savefig(os.path.join(CFG.log_dir, f"finetuning_loss_fold_{fold}.png"))
-        plt.show()
+        # plt.show()
         f1_scores.append(np.max(history["Valid F1"]))
 
-    print("Best F1 scores after FT: {}".format(np.mean(f1_scores)))
+    logging.info("Best F1 scores after FT: {}".format(np.mean(f1_scores)))
     return np.mean(f1_scores)

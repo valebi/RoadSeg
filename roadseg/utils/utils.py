@@ -40,13 +40,17 @@ def setup() -> argparse.Namespace:
     Returns:
         argparse.Namespace: Parsed arguments from command line.
     """
+
     cfg = parse_args()
 
     if cfg.debug:
         # Hardcode some arguments for faster debugging
         cfg.experiment_tag = "debug"
-        cfg.pretraining_epochs = 1
-        cfg.finetuning_epochs = 1
+        cfg.pretraining_epochs = 2
+        cfg.finetuning_epochs = 2
+        cfg.max_per_dataset = 64
+
+    set_seed(cfg.seed)
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     cfg.experiment_name = f"{cfg.smp_model}_{cfg.smp_backbone}_{cfg.experiment_tag}"
@@ -61,8 +65,6 @@ def setup() -> argparse.Namespace:
     logging.debug("Command line arguments:")
     for arg, val in vars(cfg).items():
         logging.debug(f"\t{arg}: {val}")
-
-    set_seed(cfg.seed)
     return cfg
 
 
@@ -78,6 +80,7 @@ def setup_logging(cfg: argparse.Namespace):
         datefmt="%Y/%m/%d %H:%M:%S",
         level=logging.DEBUG if cfg.debug else logging.INFO,
         filename=log_file,
+        force=True if not cfg.log_to_file else False,
     )
 
     # Suppress logging from other modules
@@ -101,12 +104,6 @@ def finalize(CFG: argparse.Namespace):
 
 
 def prepare_wandb(CFG):
-    if CFG.kaggle:
-        from kaggle_secrets import UserSecretsClient
-
-        wandb_token = UserSecretsClient().get_secret("wandb")
-        wandb.login(key=wandb_token)
-
     wandb_mode = "disabled" if (not CFG.wandb) else "online"
     # @TODO: add id as cmd line argument, make this able to resume.
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -115,6 +112,7 @@ def prepare_wandb(CFG):
         resume="allow",
         name=CFG.experiment_name + "__" + timestamp,
         mode=wandb_mode,
+        config=vars(CFG),
         dir=CFG.log_dir,
     )
 
