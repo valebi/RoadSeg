@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 
 import albumentations as A
 import cv2
+import imageio as io
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -35,6 +36,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
             self.msk_paths = np.array(self.msk_paths)[ixes]
 
     def __getitem__(self, index):
+        ##TODO:CAN WE CHANGE THIS TO IMAGEIO, opencv reads images in BGR order, might have issues with it later since it is unconventional
         img = cv2.imread(self.img_paths[index])
         msk = cv2.imread(self.msk_paths[index])
 
@@ -176,4 +178,4 @@ dataset_map = {
     "maptiler": MaptilerDataset,
     "esri": ESRIDataset,
     "bing": BingDataset,
-}
+}    
