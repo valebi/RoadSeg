@@ -14,7 +14,7 @@ def build_model(CFG, num_classes):
         in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=num_classes,  # model output channels (number of classes in your dataset)
         activation=None,
-        decoder_channels=(128, 64, 32, 16),
+        decoder_channels=(64, 64, 32, 16),
         encoder_depth=4,
     )
     model.to(CFG.device)

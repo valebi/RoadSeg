@@ -27,7 +27,7 @@ from roadseg.model.metrics import (
     recall,
     reg_f1_loss,
 )
-from roadseg.model.optimizers import fetch_scheduler
+from roadseg.model.schedulers import fetch_scheduler
 from roadseg.utils.plots import plot_batch
 from roadseg.utils.utils import log_images
 
@@ -252,7 +252,9 @@ def run_training(
 def pretrain_model(CFG, model, train_loader, val_loader):
     model_name = f"pretrain"
     optimizer = optim.Adam(model.parameters(), lr=CFG.pretraining_lr, weight_decay=CFG.weight_decay)
-    scheduler = fetch_scheduler(optimizer, CFG, n_train_samples=len(train_loader))
+    scheduler = fetch_scheduler(
+        optimizer, CFG, epochs=CFG.pretraining_epochs, n_train_batches=len(train_loader)
+    )
     if CFG.wandb:
         wandb.watch(model, criterion=BCELoss, log_freq=100)
     model, history_pre = run_training(
@@ -287,7 +289,9 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         optimizer = optim.Adam(
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
         )
-        scheduler = fetch_scheduler(optimizer, CFG=CFG, n_train_samples=len(train_loader))
+        scheduler = fetch_scheduler(
+            optimizer, CFG=CFG, epochs=CFG.finetuning_epochs, n_train_batches=len(train_loader)
+        )
         model, history = run_training(
             model,
             model_name,

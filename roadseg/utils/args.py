@@ -150,7 +150,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pretraining_lr",
         type=float,
-        default=1e-3,
+        default=2e-3,
         help="Learning rate for pretraining.",
     )
     parser.add_argument(
@@ -162,7 +162,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--finetuning_lr",
         type=float,
-        default=1e-4,
+        default=2e-3,
         help="Learning rate for finetuning.",
     )
     parser.add_argument(
