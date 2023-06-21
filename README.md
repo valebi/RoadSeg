@@ -13,5 +13,8 @@ For windows type
 conda activate {YOUR_ENV}
 & 'make.exe' install
 ```
-
+## Running on Kaggle
+You need to add the following kaggle secrets:
+- Wandb API key (goto wandb > user settings)
+- Github ssh key (goto github > settings > personal access tokens)
 @TODO this file may have copyright issues

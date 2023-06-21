@@ -82,6 +82,12 @@ def parse_args() -> argparse.Namespace:
         help="Datasets to use for pretraining.",
     )
     parser.add_argument(
+        "--max_per_dataset",
+        type=int,
+        default=-1,
+        help="Maximum number of images to use per dataset. -1 for all images.",
+    )
+    parser.add_argument(
         "--num_workers",
         type=int,
         default=8,
@@ -117,7 +123,7 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=400,
         help="Size of input images. Square images are assumed.",
-    )    
+    )
     parser.add_argument(
         "--pretrain",
         type=bool,
@@ -160,7 +166,7 @@ def parse_args() -> argparse.Namespace:
         default="cosine",
         choices=["cosine", "plateau", "exponential", "cosine_warm_restarts"],
         help="Learning rate scheduler.",
-    )   
+    )
     parser.add_argument(
         "--min_lr",
         type=float,
@@ -173,5 +179,5 @@ def parse_args() -> argparse.Namespace:
         default=1e-6,
         help="Weight decay for optimizer.",
     )
-        
+
     return parser.parse_args()
