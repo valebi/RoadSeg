@@ -1,13 +1,15 @@
 from torch.optim import lr_scheduler
 
 
-def fetch_scheduler(optimizer, CFG, epochs, n_train_batches):
+def fetch_scheduler(optimizer, CFG, is_finetuning, n_train_batches):
     # @TODO: test other schedulers than cosine
-    # @TODO: make this depend on whether pretraining or finetuning
+    epochs = CFG.finetuning_epochs if is_finetuning else CFG.pretraining_epochs
     if CFG.scheduler == "cosine":
         # @TODO: find better heuristic for T_max
-        T_max = int(n_train_batches * epochs)
-        T_max = max(T_max, 100)
+        if is_finetuning:
+            T_max = int(128 / CFG.train_batch_size * CFG.finetuning_epochs) + 1
+        else:
+            T_max = int(n_train_batches * CFG.pretraining_epochs) + 50
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=T_max, eta_min=CFG.min_lr
         )  # , last_epoch=epochs-1)

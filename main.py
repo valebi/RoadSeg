@@ -36,10 +36,10 @@ def main(CFG: Namespace):
         summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
     if not CFG.no_pretrain:
-        logging.info(f"Training on {n_train_samples} samples")
+        logging.info(f"Training on {n_train_samples*CFG.pretraining_batch_size} samples")
         model = pretrain_model(CFG, model, train_loader, val_loader)
 
-    logging.info(f"Finetuning on {len(test_splits[0][0])} samples")
+    logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.finetuning_batch_size} samples")
     avg_f1 = evaluate_finetuning(model, test_splits, CFG)
 
     make_ensemble(CFG)

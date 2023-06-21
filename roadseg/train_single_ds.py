@@ -253,7 +253,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
     model_name = f"pretrain"
     optimizer = optim.Adam(model.parameters(), lr=CFG.pretraining_lr, weight_decay=CFG.weight_decay)
     scheduler = fetch_scheduler(
-        optimizer, CFG, epochs=CFG.pretraining_epochs, n_train_batches=len(train_loader)
+        optimizer, CFG, is_finetuning=False, n_train_batches=len(train_loader)
     )
     if CFG.wandb:
         wandb.watch(model, criterion=BCELoss, log_freq=100)
@@ -290,7 +290,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
         )
         scheduler = fetch_scheduler(
-            optimizer, CFG=CFG, epochs=CFG.finetuning_epochs, n_train_batches=len(train_loader)
+            optimizer, CFG=CFG, is_finetuning=True, n_train_batches=len(train_loader)
         )
         model, history = run_training(
             model,
