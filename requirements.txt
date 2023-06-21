@@ -7,3 +7,4 @@ torchmetrics
 wandb
 torchsummary
 albumentations
+absl-py

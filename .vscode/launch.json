@@ -17,9 +17,11 @@
                 "16",
                 "--datasets",
                 "hofmann",
+                "--n_finetuning_folds",
+                "2",
                 "--no_pretrain",
                 "--debug",
-                "--wandb"
+                "--make_submission"
             ]
         }
     ]

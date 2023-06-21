@@ -82,7 +82,6 @@ def parse_args() -> argparse.Namespace:
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
-
     parser.add_argument(
         "--max_per_dataset",
         type=int,
@@ -94,6 +93,22 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=8,
         help="Number of workers for data loading. (torch)",
+    )
+    # INFERENCE
+    parser.add_argument(
+        "--make_submission", action="store_true", help="Generates a submission file when set."
+    )
+    parser.add_argument(
+        "--test_imgs_dir",
+        type=str,
+        default="data/ethz-cil-road-segmentation-2023/test/images",
+        help="Directory containing the test data.",
+    )
+    parser.add_argument(
+        "--out_dir",
+        type=str,
+        default="output",
+        help="Where to store the predictions.",
     )
     # MODEL
     parser.add_argument(
