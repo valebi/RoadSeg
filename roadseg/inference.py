@@ -26,9 +26,14 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     imgs = np.asarray(imgs).transpose([0, 3, 1, 2]).astype(np.float32)
     imgs /= 255.0
 
-    pred = model(torch.tensor(imgs).to(CFG.device))
-    pred = torch.nn.functional.softmax(pred, dim=1)
-    pred = pred.numpy()[:, road_class, :, :] * 255
+    imgs = torch.tensor(imgs, device=CFG.device, dtype=torch.float32)
+    dl = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(imgs), batch_size=CFG.val_batch_size, shuffle=False
+    )
+
+    pred = torch.concatenate([model(d) for d, in dl], axis=0)
+    pred = torch.nn.functional.softmax(pred, dim=1).cpu().numpy()
+    pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
     for i, prd in enumerate(pred):
         img = PIL.Image.fromarray(prd)
