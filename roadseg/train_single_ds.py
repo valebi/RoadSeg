@@ -31,7 +31,7 @@ from roadseg.utils.plots import plot_batch
 from roadseg.utils.utils import log_images
 
 
-def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, criterion):
+def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, criterion, use_wandb, model_name):
     n_accumulate = 1  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
     model.train()
     scaler = amp.GradScaler()
@@ -69,6 +69,11 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, crit
 
         epoch_loss = running_loss / dataset_size
 
+        if use_wandb and "finetune" not in model_name:
+            global_step = step + ((epoch - 1) * len(dataloader)) ##Since epoch starts from 1
+            if global_step % 10 == 0:
+                wandb.log({f"{model_name}/epoch_loss": epoch_loss}, step=global_step)
+        
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
         current_lr = optimizer.param_groups[0]["lr"]
         pbar.set_postfix(
@@ -165,6 +170,8 @@ def run_training(
             dataloader=train_loader,
             device=device,
             epoch=epoch,
+            use_wandb=use_wandb,
+            model_name=model_name,
         )
 
         val_loss, val_scores, last_in, last_pred, last_msk = valid_one_epoch(
@@ -193,13 +200,18 @@ def run_training(
         if use_wandb:
             # @TODO: Reintroduce global step with offset or similar
             # (cannot reset step but we still want finetuning to be logged)
-            # global_step = epoch * len(train_loader)
-            wandb.log({f"{model_name} Train Loss": train_loss})  # , step=global_step)
-            wandb.log({f"{model_name} Valid Loss": val_loss})  # , step=global_step)
-            wandb.log({f"{model_name} Valid F1": val_f1})  # , step=global_step)
-            wandb.log({f"{model_name} Valid Precision": val_precision})  # , step=global_step)
-            wandb.log({f"{model_name} Valid Recall": val_recall})  # , step=global_step)
-            wandb.log({f"{model_name} Epoch": epoch})  # , step=global_step), step=global_step)
+            log_dict = {f"{model_name}/Train Loss": train_loss,
+                            f"{model_name}/Valid Loss": val_loss,
+                            f"{model_name}/Valid F1": val_f1,
+                            f"{model_name}/Valid Precision": val_precision,
+                            f"{model_name}/Valid Recall": val_recall,
+                            f"{model_name}/Epoch": epoch}
+            
+            if "finetune" in model_name:
+                wandb.log(log_dict)
+            else:
+                global_step = epoch * len(train_loader)
+                wandb.log(log_dict, step=global_step)
 
         logging.info(
             f"Valid Loss: {val_loss:0.4f} | Valid F1: {val_f1:0.4f} | Valid Precision: {val_precision:0.4f} | Valid Recall: {val_recall:0.4f}"
