@@ -112,13 +112,13 @@ def parse_args() -> argparse.Namespace:
         "--train_batch_size",
         type=int,
         default=32,
-        help="Batch size for training. Is multiplied by available #replicas.",
+        help="Batch size for training.",
     )
     parser.add_argument(
         "--val_batch_size",
         type=int,
         default=48,
-        help="Batch size for validation. Is multiplied by available #replicas.",
+        help="Batch size for validation.",
     )
     parser.add_argument(
         "--img_size",
