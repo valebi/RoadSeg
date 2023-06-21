@@ -6,6 +6,7 @@ from argparse import Namespace
 from torchsummary import summary
 
 from roadseg.datasets.dataloaders import get_dataloaders
+from roadseg.inference import make_ensemble, make_submission
 from roadseg.model.smp_models import build_model
 from roadseg.train_single_ds import evaluate_finetuning, pretrain_model
 from roadseg.utils.augmentations import get_albumentations
@@ -22,7 +23,6 @@ def main(CFG: Namespace):
 
     model = build_model(CFG, num_classes=2)
 
-    logging.info(f"Training on {n_train_samples} samples")
     imgs, msks = next(iter(train_loader))
     plot_batch(
         imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="train", log_dir=CFG.log_dir
@@ -36,11 +36,16 @@ def main(CFG: Namespace):
         summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
     if not CFG.no_pretrain:
-        model = pretrain_model(
-            CFG, model, train_loader, val_loader, n_train_samples=n_train_samples
-        )
+        logging.info(f"Training on {n_train_samples} samples")
+        model = pretrain_model(CFG, model, train_loader, val_loader)
 
-    avg_f1 = evaluate_finetuning(model, test_splits, CFG, n_comp_samples=144)
+    logging.info(f"Finetuning on {len(test_splits[0][0])} samples")
+    avg_f1 = evaluate_finetuning(model, test_splits, CFG)
+
+    make_ensemble(CFG)
+
+    if CFG.make_submission:
+        make_submission(CFG)
 
     end = time.time()
     elapsed = datetime.timedelta(seconds=end - start)

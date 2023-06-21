@@ -17,6 +17,7 @@ from torch.cuda import amp
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+from roadseg.inference import generate_predictions
 from roadseg.model.metrics import (
     BCELoss,
     dice_coef,
@@ -200,6 +201,7 @@ def run_training(
         if use_wandb:
             # @TODO: Reintroduce global step with offset or similar
             # (cannot reset step but we still want finetuning to be logged)
+<<<<<<< HEAD
             log_dict = {f"{model_name}/Train Loss": train_loss,
                             f"{model_name}/Valid Loss": val_loss,
                             f"{model_name}/Valid F1": val_f1,
@@ -212,6 +214,18 @@ def run_training(
             else:
                 global_step = epoch * len(train_loader)
                 wandb.log(log_dict, step=global_step)
+=======
+            # global_step = epoch * len(train_loader)
+            wandb.log({f"{model_name} Train Loss": train_loss})  # , step=global_step)
+            wandb.log({f"{model_name} Valid Loss": val_loss})  # , step=global_step)
+            wandb.log({f"{model_name} Valid F1": val_f1})  # , step=global_step)
+            wandb.log({f"{model_name} Valid Precision": val_precision})  # , step=global_step)
+            wandb.log({f"{model_name} Valid Recall": val_recall})  # , step=global_step)
+            wandb.log(
+                {f"{model_name} Last LR": optimizer.param_groups[0]["lr"]}
+            )  # , step=global_step)
+            wandb.log({f"{model_name} Epoch": epoch})  # , step=global_step), step=global_step)
+>>>>>>> e861ca1f8fc38d5923fce86ea4d102ead089539a
 
         logging.info(
             f"Valid Loss: {val_loss:0.4f} | Valid F1: {val_f1:0.4f} | Valid Precision: {val_precision:0.4f} | Valid Recall: {val_recall:0.4f}"
@@ -244,7 +258,7 @@ def run_training(
     return model, history
 
 
-def pretrain_model(CFG, model, train_loader, val_loader, n_train_samples=None):
+def pretrain_model(CFG, model, train_loader, val_loader):
     model_name = f"pretrain"
     optimizer = optim.Adam(model.parameters(), lr=CFG.pretraining_lr, weight_decay=CFG.weight_decay)
     scheduler = fetch_scheduler(optimizer, CFG, n_train_samples=len(train_loader))
@@ -274,7 +288,7 @@ def pretrain_model(CFG, model, train_loader, val_loader, n_train_samples=None):
     return model
 
 
-def evaluate_finetuning(pretrained_model, comp_splits, CFG, n_comp_samples=None):
+def evaluate_finetuning(pretrained_model, comp_splits, CFG):
     f1_scores = []
     for fold, (train_loader, val_loader) in enumerate(comp_splits):
         model = copy.deepcopy(pretrained_model)
@@ -296,6 +310,8 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG, n_comp_samples=None)
             log_dir=CFG.log_dir,
             num_epochs=CFG.finetuning_epochs,
         )
+
+        generate_predictions(model, CFG, fold=fold)
 
         fig, ax = plt.subplots(1, 1, figsize=(10, 4))
         ax.set_title("Finetuning fold {}".format(fold))
