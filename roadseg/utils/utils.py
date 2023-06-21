@@ -50,9 +50,7 @@ def setup() -> argparse.Namespace:
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     cfg.experiment_name = f"{cfg.smp_model}_{cfg.smp_backbone}_{cfg.experiment_tag}"
-    log_dir = os.path.join(
-        cfg.log_dir, cfg.experiment_name, timestamp
-    )
+    log_dir = os.path.join(cfg.log_dir, cfg.experiment_name, timestamp)
     cfg.log_dir = log_dir
     if not os.path.exists(cfg.log_dir):
         os.makedirs(cfg.log_dir)
@@ -104,54 +102,61 @@ def finalize(CFG: argparse.Namespace):
 
 def prepare_wandb(CFG):
     if CFG.kaggle:
+        from kaggle_secrets import UserSecretsClient
+
         wandb_token = UserSecretsClient().get_secret("wandb")
-        wandb.login(key = wandb_token)
-        
+        wandb.login(key=wandb_token)
+
     wandb_mode = "disabled" if (not CFG.wandb) else "online"
-    # @TODO: add id as cmd line argument, make this able to resume. 
+    # @TODO: add id as cmd line argument, make this able to resume.
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    wandb.init(project=CFG.wandb_project_name,
-               resume="allow",
-               name=CFG.experiment_name + "__" + timestamp,
-               mode=wandb_mode,
-               dir=CFG.log_dir
-              )
+    wandb.init(
+        project=CFG.wandb_project_name,
+        resume="allow",
+        name=CFG.experiment_name + "__" + timestamp,
+        mode=wandb_mode,
+        dir=CFG.log_dir,
+    )
 
 
-
-def log_info(CFG: argparse.Namespace, info : dict, src = '',  step = None, epoch = None): ##NOT USED
-    '''
-        Log the given dictionary info, appends src to all fields.
-    '''
-    if not CFG.wandb: return
+def log_info(CFG: argparse.Namespace, info: dict, src="", step=None, epoch=None):  ##NOT USED
+    """
+    Log the given dictionary info, appends src to all fields.
+    """
+    if not CFG.wandb:
+        return
     for key, value in info.items():
-        if step : wandb.log({src + key: value}, step=step)
-        else : wandb.log({src + key: value})
-        
+        if step:
+            wandb.log({src + key: value}, step=step)
+        else:
+            wandb.log({src + key: value})
+
 
 def log_images(imgs, msks, preds):
-    '''
-        Accepts
-            imgs: BxCxHxW numpy array
-            msks: BxHxW numpy array
-            preds: BxHxW numpy array
-    '''
+    """
+    Accepts
+        imgs: BxCxHxW numpy array
+        msks: BxHxW numpy array
+        preds: BxHxW numpy array
+    """
     class_labels = {
-      0: "x",
-      1: "road",
+        0: "x",
+        1: "road",
     }
     MAX_NUM_OF_IMAGES = 2
-    logs= []
-    for im,mask,pred in zip(imgs,msks, preds):
+    logs = []
+    for im, mask, pred in zip(imgs, msks, preds):
         mask = mask.round().astype(np.uint8)
         pred = pred.round().astype(np.uint8)
-        i = wandb.Image(im.transpose([1,2,0]), masks={
-                            "predictions": {"mask_data": pred, "class_labels" :class_labels },
-                            "ground_truth": {"mask_data": mask, "class_labels" :class_labels} 
-                            }
+        i = wandb.Image(
+            im.transpose([1, 2, 0]),
+            masks={
+                "predictions": {"mask_data": pred, "class_labels": class_labels},
+                "ground_truth": {"mask_data": mask, "class_labels": class_labels},
+            },
         )
         logs.append(i)
-        if(len(logs) > MAX_NUM_OF_IMAGES): break
+        if len(logs) > MAX_NUM_OF_IMAGES:
+            break
 
-          
     wandb.log({"samples": logs})
