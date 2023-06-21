@@ -191,17 +191,15 @@ def run_training(
         history["Valid Recall"].append(val_recall)
 
         if use_wandb:
-            global_step = epoch * len(train_loader)
-            wandb.log({f"{model_name} Train Loss": train_loss}, step=global_step)
-            wandb.log({f"{model_name} Valid Loss": val_loss}, step=global_step)
-            wandb.log({f"{model_name} Valid F1": val_f1}, step=global_step)
-            wandb.log({f"{model_name} Valid Precision": val_precision}, step=global_step)
-            wandb.log({f"{model_name} Valid Recall": val_recall}, step=global_step)
-            wandb.log(
-                {f"{model_name} Valid Precision": val_precision, "Valid Recall": val_recall},
-                step=global_step,
-            )
-            wandb.log({f"{model_name} Epoch": epoch}, step=global_step)
+            # @TODO: Reintroduce global step with offset or similar
+            # (cannot reset step but we still want finetuning to be logged)
+            # global_step = epoch * len(train_loader)
+            wandb.log({f"{model_name} Train Loss": train_loss})  # , step=global_step)
+            wandb.log({f"{model_name} Valid Loss": val_loss})  # , step=global_step)
+            wandb.log({f"{model_name} Valid F1": val_f1})  # , step=global_step)
+            wandb.log({f"{model_name} Valid Precision": val_precision})  # , step=global_step)
+            wandb.log({f"{model_name} Valid Recall": val_recall})  # , step=global_step)
+            wandb.log({f"{model_name} Epoch": epoch})  # , step=global_step), step=global_step)
 
         logging.info(
             f"Valid Loss: {val_loss:0.4f} | Valid F1: {val_f1:0.4f} | Valid Precision: {val_precision:0.4f} | Valid Recall: {val_recall:0.4f}"

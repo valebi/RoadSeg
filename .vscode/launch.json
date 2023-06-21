@@ -17,6 +17,7 @@
                 "16",
                 "--datasets",
                 "hofmann",
+                "--no_pretrain",
                 "--debug",
                 "--wandb"
             ]

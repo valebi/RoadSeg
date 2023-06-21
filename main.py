@@ -35,7 +35,7 @@ def main(CFG: Namespace):
     if CFG.debug:
         summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
-    if len(CFG.datasets) > 0:
+    if not CFG.no_pretrain:
         model = pretrain_model(
             CFG, model, train_loader, val_loader, n_train_samples=n_train_samples
         )

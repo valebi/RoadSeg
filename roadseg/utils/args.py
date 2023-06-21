@@ -81,6 +81,8 @@ def parse_args() -> argparse.Namespace:
         choices=["cil", "hofmann", "maptiler", "esri", "bing"],
         help="Datasets to use for pretraining.",
     )
+    parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
+
     parser.add_argument(
         "--max_per_dataset",
         type=int,
