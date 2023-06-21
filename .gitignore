@@ -5,7 +5,7 @@ RoadSegmentation.code-workspace
 logs/
 
 # data
-data/
+#data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
