@@ -283,8 +283,11 @@ def pretrain_model(CFG, model, train_loader, val_loader):
 
 def evaluate_finetuning(pretrained_model, comp_splits, CFG):
     f1_scores = []
-    for fold, (train_loader, val_loader) in enumerate(comp_splits):
+    for fold, (_train_loader, _val_loader) in enumerate(comp_splits):
         model = copy.deepcopy(pretrained_model)
+        train_loader, val_loader = copy.deepcopy(_train_loader), copy.deepcopy(
+            _val_loader
+        )  # this might fix memory leak
         model_name = f"finetune-fold-{fold}"
         optimizer = optim.Adam(
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
@@ -316,6 +319,9 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         fig.savefig(os.path.join(CFG.log_dir, f"finetuning_loss_fold_{fold}.png"))
         # plt.show()
         f1_scores.append(np.max(history["Valid F1"]))
+
+        del train_loader, val_loader  # this might fix memory leak
+        gc.collect()
 
     logging.info("Best F1 scores after FT: {}".format(np.mean(f1_scores)))
     return np.mean(f1_scores)
