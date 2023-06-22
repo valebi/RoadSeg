@@ -82,8 +82,8 @@ def train_one_epoch(
         pbar.set_postfix(
             train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
         )
-    torch.cuda.empty_cache()
-    gc.collect()
+        torch.cuda.empty_cache()
+        gc.collect()
 
     return epoch_loss
 

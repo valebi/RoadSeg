@@ -10,7 +10,7 @@
                 "--device",
                 "cpu",
                 "--smp_backbone",
-                "timm-regnety_002",
+                "timm-regnety_080",
                 "--train_batch_size",
                 "32",
                 "--val_batch_size",

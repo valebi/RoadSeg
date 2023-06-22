@@ -71,4 +71,4 @@ def get_dataloaders(CFG, transforms):
             drop_last=False,
         )
         comp_splits.append((comp_train_loader, comp_val_loader))
-    return train_loader, val_loader, comp_splits, len(train_dataset)
+    return train_loader, val_loader, comp_splits

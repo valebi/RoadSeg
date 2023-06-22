@@ -19,7 +19,7 @@ def main(CFG: Namespace):
     start = time.time()
 
     transforms = get_albumentations(CFG)
-    train_loader, val_loader, test_splits, n_train_samples = get_dataloaders(CFG, transforms)
+    train_loader, val_loader, test_splits = get_dataloaders(CFG, transforms)
 
     model = build_model(CFG, num_classes=2)
 
@@ -36,7 +36,7 @@ def main(CFG: Namespace):
         summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
     if not CFG.no_pretrain:
-        logging.info(f"Training on {n_train_samples*CFG.train_batch_size} samples")
+        logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")
         model = pretrain_model(CFG, model, train_loader, val_loader)
 
     logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
