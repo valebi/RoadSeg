@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from sklearn.model_selection import KFold
 from torch.utils.data import DataLoader, Subset
+from tqdm import tqdm
 
 from roadseg.datasets.SegmentationDatasets import CIL23Dataset, dataset_map
 
@@ -24,6 +25,11 @@ def get_dataloaders(CFG, transforms):
         dataset_map[ds](CFG, transforms=transforms, max_samples=CFG.max_per_dataset)
         for ds in CFG.datasets
     ]
+    for i in tqdm(range(len(datasets[0]))):
+        print(datasets[0][i][0].shape)
+
+    raise Exception("stop")
+
     train_dataset, val_dataset = make_train_val(datasets)
     train_loader = DataLoader(
         train_dataset,
