@@ -65,19 +65,19 @@ def train_one_epoch(
         dataset_size += batch_size
 
         epoch_loss = running_loss / dataset_size
+
+        if use_wandb and "finetune" not in model_name:
+            global_step = step + ((epoch - 1) * len(dataloader))  ##Since epoch starts from 1
+            if global_step % 10 == 0:
+                wandb.log({f"{model_name}/epoch_loss": epoch_loss}, step=global_step)
+
+        mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
+        current_lr = optimizer.param_groups[0]["lr"]
+        pbar.set_postfix(
+            train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
+        )
         torch.cuda.empty_cache()
         gc.collect()
-
-    if use_wandb and "finetune" not in model_name:
-        global_step = step + ((epoch - 1) * len(dataloader))  ##Since epoch starts from 1
-        if global_step % 10 == 0:
-            wandb.log({f"{model_name}/epoch_loss": epoch_loss}, step=global_step)
-
-    mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
-    current_lr = optimizer.param_groups[0]["lr"]
-    pbar.set_postfix(
-        train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
-    )
 
     return epoch_loss
 
