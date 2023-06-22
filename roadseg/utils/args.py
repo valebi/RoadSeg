@@ -94,6 +94,8 @@ def parse_args() -> argparse.Namespace:
         default=8,
         help="Number of workers for data loading. (torch)",
     )
+    parser.add_argument("--no_aug", action="store_true", help="Disable augmentations.")
+
     # INFERENCE
     parser.add_argument(
         "--make_submission", action="store_true", help="Generates a submission file when set."

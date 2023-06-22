@@ -21,7 +21,8 @@
                 "5",
                 "--no_pretrain",
                 "--debug",
-                "--make_submission"
+                "--make_submission",
+                "--no_aug"
             ]
         }
     ]

@@ -37,8 +37,10 @@ class SegmentationDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         ##TODO:CAN WE CHANGE THIS TO IMAGEIO, opencv reads images in BGR order, might have issues with it later since it is unconventional
-        img = cv2.imread(self.img_paths[index])
-        msk = cv2.imread(self.msk_paths[index])
+        # img = cv2.imread(self.img_paths[index])
+        # msk = cv2.imread(self.msk_paths[index])
+        img = io.imread(self.img_paths[index])[:, :, :3]
+        msk = io.imread(self.msk_paths[index])
 
         # logging.info(img.shape, msk.shape, img.dtype, msk.dtype, img.max(), msk.max(), img.min(), msk.min())
 
@@ -178,4 +180,4 @@ dataset_map = {
     "maptiler": MaptilerDataset,
     "esri": ESRIDataset,
     "bing": BingDataset,
-}    
+}
