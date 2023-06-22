@@ -22,7 +22,9 @@
                 "--no_pretrain",
                 "--debug",
                 "--make_submission",
-                "--no_aug"
+                "--no_aug",
+                "--scheduler",
+                "plateau"
             ]
         }
     ]
