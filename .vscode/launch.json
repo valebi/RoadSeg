@@ -10,18 +10,18 @@
                 "--device",
                 "cpu",
                 "--smp_backbone",
-                "timm-regnety_080",
+                "timm-regnety_002",
                 "--train_batch_size",
                 "32",
                 "--val_batch_size",
                 "32",
                 "--datasets",
-                "hofmann",
+                "maptiler",
                 "--n_finetuning_folds",
                 "5",
-                "--no_pretrain",
-                "--debug",
                 "--make_submission",
+                "--num_workers",
+                "1"
             ]
         }
     ]

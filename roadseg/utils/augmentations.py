@@ -22,7 +22,7 @@ def get_albumentations(CFG):
                     A.RandomBrightnessContrast(p=1.0),
                     A.RandomGamma(p=1.0),
                     A.CLAHE(p=1.0),
-                    A.JpegCompression(p=1.0),
+                    A.ImageCompression(p=1.0),
                     A.HueSaturationValue(p=1.0),
                 ],
                 p=0.35,
