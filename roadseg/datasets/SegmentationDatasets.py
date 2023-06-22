@@ -28,12 +28,14 @@ class SegmentationDataset(torch.utils.data.Dataset):
         return len(self.img_paths)
 
     def _ensure_size(self):
+        self.img_paths = np.array(self.img_paths)
+        self.msk_paths = np.array(self.msk_paths)
         if self.max_samples != -1 and self.max_samples < len(self.img_paths):
             ixes = np.random.choice(
                 np.arange(0, len(self.img_paths)), self.max_samples, replace=False
             )
-            self.img_paths = np.array(self.img_paths)[ixes]
-            self.msk_paths = np.array(self.msk_paths)[ixes]
+            self.img_paths = self.img_paths[ixes]
+            self.msk_paths = self.msk_paths[ixes]
 
     def __getitem__(self, index):
         ##TODO:CAN WE CHANGE THIS TO IMAGEIO, opencv reads images in BGR order, might have issues with it later since it is unconventional

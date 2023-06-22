@@ -5,11 +5,7 @@ def fetch_scheduler(optimizer, CFG, is_finetuning, n_train_batches):
     # @TODO: test other schedulers than cosine
     epochs = CFG.finetuning_epochs if is_finetuning else CFG.pretraining_epochs
     if CFG.scheduler == "cosine":
-        # @TODO: find better heuristic for T_max
-        if is_finetuning:
-            T_max = int(128 / CFG.train_batch_size * CFG.finetuning_epochs) + 1
-        else:
-            T_max = int(n_train_batches * CFG.pretraining_epochs) + 50
+        T_max = int(n_train_batches * CFG.pretraining_epochs)
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=T_max, eta_min=CFG.min_lr
         )  # , last_epoch=epochs-1)
