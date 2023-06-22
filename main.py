@@ -21,6 +21,11 @@ def main(CFG: Namespace):
     transforms = get_albumentations(CFG)
     train_loader, val_loader, test_splits = get_dataloaders(CFG, transforms)
 
+    for d in train_loader.dataset.datasets:
+        print(len(d))
+
+    return
+
     model = build_model(CFG, num_classes=2)
 
     imgs, msks = next(iter(train_loader))
