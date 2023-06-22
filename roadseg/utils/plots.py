@@ -38,7 +38,7 @@ def _plot_batch(imgs, masks, preds=None, src="", log_dir=None):
 
     # fig.draw()
     if log_dir is not None:
-        if len(preds) > 0:
+        if len(preds) == 0:
             fig.savefig(os.path.join(log_dir, f"sample_batch_{src}.png"))
         else:
             fig.savefig(os.path.join(log_dir, f"sample_pred_{src}.png"))
@@ -66,7 +66,7 @@ def plot_batch(imgs, msks, pred=None, num_cols=5, src="", log_dir=None):
                 grid[i + 2 * num_cols].imshow(np.expand_dims(pred[i], -1))
 
     if log_dir is not None:
-        if pred is not None:
+        if pred is None:
             fig.savefig(os.path.join(log_dir, f"sample_batch_{src}.png"))
         else:
             fig.savefig(os.path.join(log_dir, f"sample_pred_{src}.png"))

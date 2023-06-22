@@ -18,7 +18,6 @@ class SegmentationDataset(torch.utils.data.Dataset):
         super().__init__()
         self.transforms = transforms
         self.is_train = False
-        self.label_transform = None
         self.crop = None
         self.img_paths = []
         self.msk_paths = []
@@ -47,8 +46,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
         # logging.info(img.shape, msk.shape, img.dtype, msk.dtype, img.max(), msk.max(), img.min(), msk.min())
 
         # remove / reorder labels to map them to 0 = BG, 255 = ROAD
-        if self.label_transform is not None:
-            msk = self.label_transform(msk)
+        msk = self.label_transform(msk)
 
         # treat masks as single-channel images (for augmentations)
         if len(np.asarray(msk).shape) == 2:
@@ -74,6 +72,9 @@ class SegmentationDataset(torch.utils.data.Dataset):
             img / 255,
             (msk / 255).type(torch.uint8)[0],
         )  # scale to 0-1 and remove channel dim from mask
+
+    def label_transform(self, msk):
+        return msk
 
 
 class MaptilerDataset(SegmentationDataset):
@@ -113,7 +114,7 @@ class HofmannDataset(SegmentationDataset):
         self._ensure_size()
 
     def label_transform(self, msk):
-        return 255 - msk[:, :, 2:]
+        return 255 - msk[:, :, :1]
 
 
 class ESRIDataset(SegmentationDataset):
