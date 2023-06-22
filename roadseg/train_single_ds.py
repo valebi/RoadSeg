@@ -44,22 +44,28 @@ def train_one_epoch(
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
     for step, (images, masks) in pbar:
-        batch_size = images.shape[0]
         images = images.to(device, dtype=torch.float)
         masks = masks.to(device, dtype=torch.long)
 
-        y_pred = model(images)
-        loss = criterion(y_pred, masks)
-        loss = loss / n_accumulate
+        batch_size = images.size(0)
 
-        loss.backward()
+        with amp.autocast(enabled=True):
+            y_pred = model(images)
+            loss = criterion(y_pred, masks)
+            loss = loss / n_accumulate
 
-        optimizer.step()
+        scaler.scale(loss).backward()
 
-        optimizer.zero_grad()
+        if (step + 1) % n_accumulate == 0:
+            # xm.optimizer_step(optimizer, barrier=True)
+            scaler.step(optimizer)
+            scaler.update()
 
-        if scheduler is not None:
-            scheduler.step()
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            if scheduler is not None:
+                scheduler.step()
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
@@ -279,9 +285,6 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
     f1_scores = []
     for fold, (_train_loader, _val_loader) in enumerate(comp_splits):
         model = copy.deepcopy(pretrained_model)
-        train_loader, val_loader = copy.deepcopy(_train_loader), copy.deepcopy(
-            _val_loader
-        )  # this might fix memory leak
         model_name = f"finetune-fold-{fold}"
         optimizer = optim.Adam(
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
@@ -314,7 +317,6 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         # plt.show()
         f1_scores.append(np.max(history["Valid F1"]))
 
-        del train_loader, val_loader  # this might fix memory leak
         gc.collect()
 
     logging.info("Best F1 scores after FT: {}".format(np.mean(f1_scores)))
