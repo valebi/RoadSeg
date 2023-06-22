@@ -44,47 +44,45 @@ def train_one_epoch(
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
     for step, (images, masks) in pbar:
+        batch_size = images.shape[0]
         images = images.to(device, dtype=torch.float)
         masks = masks.to(device, dtype=torch.long)
 
-        if False:
-            batch_size = images.size(0)
+        with amp.autocast(enabled=True):
+            y_pred = model(images)
+            loss = criterion(y_pred, masks)
+            loss = loss / n_accumulate
 
-            with amp.autocast(enabled=True):
-                y_pred = model(images)
-                loss = criterion(y_pred, masks)
-                loss = loss / n_accumulate
+        scaler.scale(loss).backward()
 
-            scaler.scale(loss).backward()
+        if (step + 1) % n_accumulate == 0:
+            # xm.optimizer_step(optimizer, barrier=True)
+            scaler.step(optimizer)
+            scaler.update()
 
-            if (step + 1) % n_accumulate == 0:
-                # xm.optimizer_step(optimizer, barrier=True)
-                scaler.step(optimizer)
-                scaler.update()
+            # zero the parameter gradients
+            optimizer.zero_grad()
 
-                # zero the parameter gradients
-                optimizer.zero_grad()
+            if scheduler is not None:
+                scheduler.step()
 
-                if scheduler is not None:
-                    scheduler.step()
+        running_loss += loss.item() * batch_size
+        dataset_size += batch_size
 
-            running_loss += loss.item() * batch_size
-            dataset_size += batch_size
+        epoch_loss = running_loss / dataset_size
 
-            epoch_loss = running_loss / dataset_size
+        if use_wandb and "finetune" not in model_name:
+            global_step = step + ((epoch - 1) * len(dataloader))  ##Since epoch starts from 1
+            if global_step % 10 == 0:
+                wandb.log({f"{model_name}/epoch_loss": epoch_loss}, step=global_step)
 
-            if use_wandb and "finetune" not in model_name:
-                global_step = step + ((epoch - 1) * len(dataloader))  ##Since epoch starts from 1
-                if global_step % 10 == 0:
-                    wandb.log({f"{model_name}/epoch_loss": epoch_loss}, step=global_step)
-
-            mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
-            current_lr = optimizer.param_groups[0]["lr"]
-            pbar.set_postfix(
-                train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
-            )
-            torch.cuda.empty_cache()
-            gc.collect()
+        mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
+        current_lr = optimizer.param_groups[0]["lr"]
+        pbar.set_postfix(
+            train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
+        )
+        torch.cuda.empty_cache()
+        gc.collect()
 
     return epoch_loss
 
