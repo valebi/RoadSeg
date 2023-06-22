@@ -54,8 +54,7 @@ def train_one_epoch(
 
         loss.backward()
 
-        scaler.step(optimizer)
-        scaler.update()
+        optimizer.step()
 
         optimizer.zero_grad()
 
