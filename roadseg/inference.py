@@ -53,4 +53,4 @@ def make_ensemble(CFG):
 
 def make_submission(CFG):
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
-    masks_to_submission("submission.csv", "", *image_filenames)
+    masks_to_submission(CFG.submission_file, "", *image_filenames)
