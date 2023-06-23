@@ -110,7 +110,13 @@ def parse_args() -> argparse.Namespace:
         "--out_dir",
         type=str,
         default="output",
-        help="Where to store the predictions.",
+        help="Where to store the predictions. MUST'T CONTAIN ANY DIGIT!",
+    )
+    parser.add_argument(
+        "--submission_file",
+        type=str,
+        default="submission.csv",
+        help="Full filename of submission CSV file.",
     )
     # MODEL
     parser.add_argument(
