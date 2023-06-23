@@ -18,7 +18,7 @@
                 "--datasets",
                 "maptiler",
                 "--n_finetuning_folds",
-                "5",
+                "2",
                 "--make_submission",
                 "--num_workers",
                 "1",

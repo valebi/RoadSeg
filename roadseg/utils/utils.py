@@ -55,7 +55,7 @@ def setup() -> argparse.Namespace:
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     cfg.experiment_name = f"{cfg.smp_model}_{cfg.smp_backbone}_{cfg.experiment_tag}"
     cfg.log_dir = os.path.join(cfg.log_dir, cfg.experiment_name, timestamp)
-    cfg.out_dir = os.path.join(cfg.out_dir, cfg.experiment_name, timestamp)
+    # cfg.out_dir = os.path.join(cfg.out_dir, cfg.experiment_name, timestamp)
     if not os.path.exists(cfg.log_dir):
         os.makedirs(cfg.log_dir)
         os.makedirs(os.path.join(cfg.log_dir, "weights"))
