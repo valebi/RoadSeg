@@ -8,9 +8,11 @@ def build_model(CFG, num_classes):
         raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
 
     # @TODO: the UNet does not contract fully with depth=4. But if it does we need img_size % 32 == 0
+    init_weights =  "imagenet" if CFG.smp_init_weights else None
+ 
     model = smp.Unet(
         encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights=None,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+        encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
         in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=num_classes,  # model output channels (number of classes in your dataset)
         activation=None,
