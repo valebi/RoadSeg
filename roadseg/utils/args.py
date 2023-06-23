@@ -126,6 +126,12 @@ def parse_args() -> argparse.Namespace:
         help="Model (/Framework) for pytorch-segmentation-models",
     )
     parser.add_argument(
+        "--smp_init_weights",
+        type=str,
+        default="",
+        help="Whether to use imagenet initialization for pytorch-segmentation-models",
+    )
+    parser.add_argument(
         "--smp_backbone",
         type=str,
         default="timm-regnety_080",
