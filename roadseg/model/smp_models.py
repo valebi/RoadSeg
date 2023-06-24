@@ -39,6 +39,7 @@ def build_model(CFG, num_classes):
         except:
             raise AttributeError(f"Model weights loading failed. Please initialize the model with the same paramaters used in initial training.")
         logging.info(f"Model weights loaded from {CFG.initial_model}.")
+        del state_dict, filtered_keys
 
 
     model.to(CFG.device)

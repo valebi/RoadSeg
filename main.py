@@ -37,22 +37,24 @@ def main(CFG: Namespace):
 
     model = build_model(CFG, num_classes=2)
 
-    imgs, msks = next(iter(train_loader))
-    plot_batch(
-        imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="train", log_dir=CFG.log_dir
-    )
-    imgs, msks = next(iter(test_splits[0][1]))
-    plot_batch(
-        imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="comp", log_dir=CFG.log_dir
-    )
-
+    
     if CFG.debug:
+        imgs, msks = next(iter(train_loader))
+        plot_batch(
+        imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="train", log_dir=CFG.log_dir
+        )
+        imgs, msks = next(iter(test_splits[0][1]))
+        plot_batch(
+            imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="comp", log_dir=CFG.log_dir
+        )
+        del imgs, msks
         summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
     gc.collect() ##Might be useful to garbage collect before we start training
     if not CFG.no_pretrain:
         logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")
         model = pretrain_model(CFG, model, train_loader, val_loader)
+        gc.collect() ##Might be useful to garbage collect before we start fine tuning
 
     logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
     avg_f1 = evaluate_finetuning(model, test_splits, CFG)
