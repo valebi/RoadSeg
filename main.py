@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import time
 from argparse import Namespace
 
@@ -11,7 +12,7 @@ from roadseg.model.smp_models import build_model
 from roadseg.train_single_ds import evaluate_finetuning, pretrain_model
 from roadseg.utils.augmentations import get_albumentations
 from roadseg.utils.plots import plot_batch
-from roadseg.utils.utils import finalize, setup
+from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
 
 
 def main(CFG: Namespace):
@@ -20,6 +21,18 @@ def main(CFG: Namespace):
 
     transforms = get_albumentations(CFG)
     train_loader, val_loader, test_splits = get_dataloaders(CFG, transforms)
+
+    if CFG.model_download_drive_id:
+        print(CFG.model_download_drive_id)
+        file_id = CFG.model_download_drive_id #.split("/")[-2]
+        print(file_id)
+        destination = CFG.initial_model
+        pathlib.Path(destination).parent.mkdir(parents=True, exist_ok=True)
+        logging.info(f"Downloading model from {CFG.model_download_drive_id} to {destination}")
+
+        for i, chunk_size in download_file_from_google_drive(file_id, destination):
+            pass
+        logging.info(f"Downloaded model to {destination}.")
 
     model = build_model(CFG, num_classes=2)
 
@@ -59,5 +72,6 @@ if __name__ == "__main__":
     try:
         main(args)
     except (Exception, KeyboardInterrupt) as e:
+        print("Exception occurred, saving a checkpoint...")
         finalize(args)
         raise e

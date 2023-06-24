@@ -24,8 +24,13 @@ def build_model(CFG, num_classes):
     )
     
     if CFG.initial_model: 
+        
         try:
             state_dict = torch.load(CFG.initial_model)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Model weights file {CFG.initial_model} not found.")
+        
+        try:
             filtered_keys =[]
             for k,v in state_dict.items():
                 filtered_keys.append( (k.replace("module.", "") , v))

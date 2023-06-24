@@ -30,7 +30,11 @@
                 "--finetuning_epochs",
                 "1",
                 "--initial_model",
-                "/Users/onat/School/RoadSeg/logs/Unet_timm-regnety_002_roadseg/2023-06-24_14-21-24/weights/last_epoch-finetune-fold-1.bin"
+                "/Users/onat/School/RoadSeg/temp_folder/chk.bin",
+                "--model_download_drive_id",
+                "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
+                // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
+                
             ]
         }
     ]
