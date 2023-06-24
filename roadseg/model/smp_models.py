@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 
 import segmentation_models_pytorch as smp
@@ -37,6 +38,7 @@ def build_model(CFG, num_classes):
             model.load_state_dict(state_dict, strict=True)
         except:
             raise AttributeError(f"Model weights loading failed. Please initialize the model with the same paramaters used in initial training.")
+        logging.info(f"Model weights loaded from {CFG.initial_model}.")
 
 
     model.to(CFG.device)
