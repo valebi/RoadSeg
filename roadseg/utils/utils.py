@@ -141,7 +141,7 @@ def log_images(imgs, msks, preds):
         0: "x",
         1: "road",
     }
-    MAX_NUM_OF_IMAGES = 2
+    MAX_NUM_OF_IMAGES = 5
     logs = []
     for im, mask, pred in zip(imgs, msks, preds):
         mask = mask.round().astype(np.uint8)
@@ -154,7 +154,7 @@ def log_images(imgs, msks, preds):
             },
         )
         logs.append(i)
-        if len(logs) > MAX_NUM_OF_IMAGES:
+        if len(logs) >= MAX_NUM_OF_IMAGES:
             break
 
     wandb.log({"samples": logs})

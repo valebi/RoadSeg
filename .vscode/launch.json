@@ -12,17 +12,25 @@
                 "--smp_backbone",
                 "timm-regnety_002",
                 "--train_batch_size",
-                "32",
+                "1",
                 "--val_batch_size",
-                "32",
+                "1",
                 "--datasets",
                 "maptiler",
                 "--n_finetuning_folds",
-                "2",
+                "1",
+                "--no_pretrain",
                 "--make_submission",
                 "--num_workers",
+                "2",
+                "--img_size",
+                "64",
+                "--n_finetuning_folds",
+                "2",
+                "--finetuning_epochs",
                 "1",
-                "--debug"
+                "--initial_model",
+                "/Users/onat/School/RoadSeg/logs/Unet_timm-regnety_002_roadseg/2023-06-24_14-21-24/weights/last_epoch-finetune-fold-1.bin"
             ]
         }
     ]
