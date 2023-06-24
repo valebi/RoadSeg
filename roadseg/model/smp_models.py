@@ -24,7 +24,6 @@ def build_model(CFG, num_classes):
     )
     
     if CFG.initial_model: 
-        
         try:
             state_dict = torch.load(CFG.initial_model)
         except FileNotFoundError:

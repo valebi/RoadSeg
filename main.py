@@ -22,6 +22,7 @@ def main(CFG: Namespace):
     transforms = get_albumentations(CFG)
     train_loader, val_loader, test_splits = get_dataloaders(CFG, transforms)
 
+    #TODO: We may add the link as an arugment too but https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link cannot be parsed correctly as input
     if CFG.model_download_drive_id:
         print(CFG.model_download_drive_id)
         file_id = CFG.model_download_drive_id #.split("/")[-2]
@@ -30,8 +31,7 @@ def main(CFG: Namespace):
         pathlib.Path(destination).parent.mkdir(parents=True, exist_ok=True)
         logging.info(f"Downloading model from {CFG.model_download_drive_id} to {destination}")
 
-        for i, chunk_size in download_file_from_google_drive(file_id, destination):
-            pass
+        download_file_from_google_drive(file_id, destination)
         logging.info(f"Downloaded model to {destination}.")
 
     model = build_model(CFG, num_classes=2)
