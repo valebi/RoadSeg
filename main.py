@@ -1,4 +1,5 @@
 import datetime
+import gc
 import logging
 import pathlib
 import time
@@ -48,6 +49,7 @@ def main(CFG: Namespace):
     if CFG.debug:
         summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
+    gc.collect() ##Might be useful to garbage collect before we start training
     if not CFG.no_pretrain:
         logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")
         model = pretrain_model(CFG, model, train_loader, val_loader)
