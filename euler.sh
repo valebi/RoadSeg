@@ -1,23 +1,42 @@
+
 USER="bieriv"
-DATA="/cluster/scratch/bieriv/cil"
-# @TODO update
+DATA_DIR="/cluster/scratch/${USER}/roadseg"
+LOG_DIR="/cluster/scratch/${USER}/roadseg/logs"
+OUT_DIR="output"
 
 module load gcc/8.2.0 python_gpu/3.10.4 eth_proxy
 
 pip install -q -r requirements.txt
 
-echo "python main.py --data ${DATA}/data/01_raw --device cuda --debug --wandb --log_dir ${DATA}/logs --lr_cpc ${LR_CPC} --test_idx ${TEST_IDX} --val_idx ${VAL_IDX} --positive_mode ${POSITIVE_MODE} --encoder_dim ${ENC_DIM} --ar_dim ${AR_DIM} --ar_layers ${AR_LAYERS} --split_mode ${SPLIT_MODE} --preprocessing ${PREPROCESSING} --normalize ${NORM} --cpc_alpha ${ALPHA} --weight_decay_cpc ${DECAY} --optimizer_cpc ${OPTIMIZER} --seq_len ${SEQ_LEN} --seq_stride ${SEQ_STRIDE}  --encoder_type ${ENCODER_TYPE} --ar_model ${AR_MODEL} --classifier_type ${CLASSIFIER_TYPE} --debug
+COMMAND="python main.py \
+                --experiment_tag="euler" \
+                --wandb \
+                --device="cuda" \
+                --num_workers=16 \
+                --log_dir="${LOG_DIR}" \
+                --data_dir="${DATA_DIR}" \
+                --test_imgs_dir="${DATA_DIR}/ethz-cil-road-segmentation-2023/test/images" \
+                --out_dir="${OUT_DIR}" \
+                --make_submission \
+                --max_per_dataset=1000 \
+                --datasets esri \
+                --smp_backbone="timm-regnety_080" \
+                --pretraining_epochs=1 \
+                --finetuning_epochs=5 \
+                --train_batch_size=96 \
+                --val_batch_size=128
+"
+echo "${COMMAND}"
 sbatch \
-    --time=06:00:00 \
+    --time=48:00:00 \
     --nodes=1 \
     --ntasks=1 \
     --cpus-per-task=20 \
-    -J "emgrep-split-${SPLIT}" \
+    -J "roadseg-train" \
     --mem-per-cpu=10000 \
-    --gres=gpumem:14240m \
+    --gres=gpumem:23240m \
     --gpus=1 \
     --mail-type=ALL \
     --mail-user="${USER}@ethz.ch" \
-    --output="logs/{}.txt" \
-    --wrap="python main.py --data ${DATA} --device cuda --debug --wandb " \
-done
+    --output="logs/last_run.txt" \
+    --wrap="${COMMAND}"
