@@ -8,6 +8,7 @@ import random
 from glob import glob
 
 import numpy as np
+import requests
 import torch
 import wandb
 
@@ -141,7 +142,7 @@ def log_images(imgs, msks, preds):
         0: "x",
         1: "road",
     }
-    MAX_NUM_OF_IMAGES = 2
+    MAX_NUM_OF_IMAGES = 5
     logs = []
     for im, mask, pred in zip(imgs, msks, preds):
         mask = mask.round().astype(np.uint8)
@@ -154,7 +155,24 @@ def log_images(imgs, msks, preds):
             },
         )
         logs.append(i)
-        if len(logs) > MAX_NUM_OF_IMAGES:
+        if len(logs) >= MAX_NUM_OF_IMAGES:
             break
 
     wandb.log({"samples": logs})
+
+
+def download_file_from_google_drive(file_id, destination, chunk_size=16384):
+    url = "https://docs.google.com/uc?export=download"
+
+    session = requests.Session()
+    params = {'id': file_id, 'confirm': 1}
+    response = session.get(url, params=params, stream=True)
+
+    with open(destination, "wb") as f:
+        for i, chunk in enumerate(response.iter_content(chunk_size)):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)
+                # yield i, chunk_size_ #This can be used to implement a progress bar
+
+
+
