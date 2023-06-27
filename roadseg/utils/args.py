@@ -126,10 +126,22 @@ def parse_args() -> argparse.Namespace:
         help="Model (/Framework) for pytorch-segmentation-models",
     )
     parser.add_argument(
-        "--smp_init_weights",
+        "--smp_encoder_init_weights",
         type=str,
         default="",
         help="Whether to use imagenet initialization for pytorch-segmentation-models",
+    )
+    parser.add_argument(
+        "--initial_model",
+        type=str,
+        default="",
+        help="One can load a pretrauned model weights to initialize the model. Must have the same architecture as the model specified by --smp_model.",
+    )
+    parser.add_argument(
+        "--model_download_drive_id",
+        type=str,
+        default="",
+        help="One can download the initial_model weights from a public made google drive file.",
     )
     parser.add_argument(
         "--smp_backbone",
