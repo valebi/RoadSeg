@@ -224,7 +224,7 @@ def run_training(
 
         # deep copy the model
         if val_loss <= best_loss:
-            logging.info(f"Valid Score Improved ({best_loss:0.4f} ---> {val_loss:0.4f})")
+            logging.info(f"Valid Loss Decreased ({best_loss:0.4f} ---> {val_loss:0.4f})")
             best_loss = val_loss
             best_model_wts = copy.deepcopy(model.state_dict())
             PATH = os.path.join(log_dir, "weights", f"best_epoch-{model_name}.bin")
@@ -241,7 +241,7 @@ def run_training(
             time_elapsed // 3600, (time_elapsed % 3600) // 60, (time_elapsed % 3600) % 60
         )
     )
-    logging.info("Best Score: {:.4f}".format(best_loss))
+    logging.info("Best Loss: {:.4f}".format(best_loss))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
