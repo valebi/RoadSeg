@@ -31,7 +31,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
         torch.utils.data.TensorDataset(imgs), batch_size=CFG.val_batch_size, shuffle=False
     )
 
-    pred = torch.concatenate([model(d) for d, in dl], axis=0)
+    pred = torch.concat([model(d) for d, in dl], axis=0)
     pred = torch.nn.functional.softmax(pred, dim=1).cpu().numpy()
     pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
