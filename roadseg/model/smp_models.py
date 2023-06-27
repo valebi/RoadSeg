@@ -5,8 +5,13 @@ import segmentation_models_pytorch as smp
 import torch
 from torch import nn
 
+import roadseg.model.dummy_unet as dummy_unet
+
 
 def build_model(CFG, num_classes):
+
+    if CFG.smp_backbone == "dummy-unet":
+        return dummy_unet.build_model(CFG, num_classes)
 
     if CFG.smp_model != "Unet":
         raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
