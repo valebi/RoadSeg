@@ -1,4 +1,3 @@
-pytorch
 segmentation_models_pytorch
 numpy 
 scikit-learn 
