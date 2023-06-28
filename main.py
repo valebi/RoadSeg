@@ -58,6 +58,7 @@ def main(CFG: Namespace):
 
     logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
     avg_f1 = evaluate_finetuning(model, test_splits, CFG)
+    logging.info(f"Average F1 score: {avg_f1}.")
 
     make_ensemble(CFG)
 
