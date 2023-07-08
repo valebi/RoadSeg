@@ -21,13 +21,13 @@ def build_model(CFG, num_classes):
     
     # @TODO: the UNet does not contract fully with depth=4. But if it does we need img_size % 32 == 0
     model = smp.Unet(
-        encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        encoder_name= "efficientnet-b5",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
         encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
         in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=num_classes,  # model output channels (number of classes in your dataset)
         activation=None,
-        decoder_channels=(64, 64, 32, 16),
-        encoder_depth=4,
+        decoder_channels=(1024, 512, 256, 64, 16),
+        encoder_depth=5,
     )
     
     if CFG.initial_model: 
