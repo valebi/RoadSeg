@@ -16,7 +16,8 @@ from roadseg.utils.mask_to_submission import (
 @torch.no_grad()
 def generate_predictions(model, CFG, road_class=1, fold=""):
     img_files = [f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")]
-    imgs = [np.array(Image.open(os.path.join(CFG.test_imgs_dir, f)))[:, :, :3] for f in img_files]
+    ##Added resize to match the training size
+    imgs = [np.array( Image.open(os.path.join(CFG.test_imgs_dir, f)).resize((CFG.img_size, CFG.img_size)) )[:, :, :3] for f in img_files]
 
     model.to(CFG.device)
     model.eval()
@@ -36,7 +37,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
     for i, prd in enumerate(pred):
-        img = PIL.Image.fromarray(prd)
+        img = PIL.Image.fromarray(prd).resize(400,400) #Added resize to match the actual size
         img.save(os.path.join(dirname, img_files[i]))
 
 
