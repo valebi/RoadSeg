@@ -37,7 +37,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
     for i, prd in enumerate(pred):
-        img = PIL.Image.fromarray(prd).resize(400,400) #Added resize to match the actual size
+        img = PIL.Image.fromarray(prd).resize( (400,400)) #Added resize to match the actual size
         img.save(os.path.join(dirname, img_files[i]))
 
 
