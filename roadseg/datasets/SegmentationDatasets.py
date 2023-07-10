@@ -177,10 +177,32 @@ class BingDataset(SegmentationDataset):
         self._ensure_size()
 
 
+class CleanBingDataset(SegmentationDataset):
+    def __init__(self, CFG, transforms=None, max_samples=-1):
+        # @TODO load the useless ones too
+        super().__init__(transforms, max_samples)
+        lbls = glob(CFG.data_dir + "/processed-bing-dataset/processed_label/*.png")
+        self.img_paths = [
+            f
+            for f in glob(CFG.data_dir + "/processed-bing-dataset/processed_sat/*.png")
+            if f.replace("processed_sat", "processed_label") in lbls
+        ]
+        self.msk_paths = [f.replace("processed_sat", "processed_label") for f in self.img_paths]
+        self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
+            CFG.img_size,
+            CFG.img_size,
+            scale=(0.85, 1.15),
+            ratio=(0.75, 1.3333333333333333),
+            interpolation=cv2.INTER_LINEAR,
+        )
+        self._ensure_size()
+
+
 dataset_map = {
     "hofmann": HofmannDataset,
     "cil": CIL23Dataset,
     "maptiler": MaptilerDataset,
     "esri": ESRIDataset,
     "bing": BingDataset,
+    "clean-bing": CleanBingDataset,
 }

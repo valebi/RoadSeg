@@ -14,12 +14,14 @@ kaggle config view
 cd  /cluster/scratch/${USER}
 mkdir ${DATA_DIR} -p
 cd ${DATA_DIR}
-kaggle datasets download maptiler-custom-tiles --unzip --path maptiler-custom-tiles
+kaggle datasets download valebi/maptiler-custom-tiles --unzip --path maptiler-custom-tiles
 kaggle competitions download ethz-cil-road-segmentation-2023 --path ethz-cil-road-segmentation-2023 --force
 cd ethz-cil-road-segmentation-2023
 unzip ethz-cil-road-segmentation-2023.zip -q
 cd -
-kaggle kernels output valebi/roadseg-download-openstreetmap --path roadseg-download-openstreetmap
-kaggle datasets  download esri-streetmap-tiles --unzip --path esri-streetmap-tiles
+kaggle datasets download valebi/hofmann-osm --unzip --path roadseg-download-openstreetmap
+#kaggle kernels output valebi/roadseg-download-openstreetmap --path roadseg-download-openstreetmap
+kaggle datasets download valebi/esri-streetmap-tiles --unzip --path esri-streetmap-tiles
+kaggle datasets download selinnbaris/processed-bing-dataset --unzip --path processed-bing-dataset
 #kaggle kernels output ahmetalperozudogru/bingscrape-noarrow --path bingscrape-noarrow
-kaggle datasets  download esri-streetmap-tiles --unzip --path esri-streetmap-tiles
+#kaggle datasets  download esri-streetmap-tiles --unzip --path esri-streetmap-tiles

@@ -7,6 +7,8 @@
             "program": "${workspaceFolder}/main.py",
             "justMyCode": true,
             "args": [
+                "--experiment_tag",
+                "local_debug",
                 "--device",
                 "cpu",
                 "--smp_backbone",
@@ -29,10 +31,12 @@
                 "2",
                 "--finetuning_epochs",
                 "1",
-                "--initial_model",
-                "/Users/onat/School/RoadSeg/temp_folder/chk.bin",
-                "--model_download_drive_id",
-                "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
+                "--scheduler",
+                "cosine_warm_restarts",
+                // "--initial_model",
+                // "/Users/onat/School/RoadSeg/temp_folder/chk.bin",
+                // "--model_download_drive_id",
+                // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
                 // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
                 
             ]
