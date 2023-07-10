@@ -62,5 +62,6 @@ def make_submission(CFG):
             message=f"autosubmit: {CFG.experiment_name}",
             competition="ethz-cil-road-segmentation-2023",
         )
+        logging.info("Submitted output to kaggle")
     except:
         logging.info("Failed to submit to kaggle")

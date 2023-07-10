@@ -21,6 +21,7 @@ COMMAND="python main.py \
                 --max_per_dataset=1000 \
                 --datasets bing-clean \
                 --smp_backbone="timm-regnety_080" \
+                --smp_encoder_init_weights \
                 --pretraining_epochs=1 \
                 --finetuning_epochs=5 \
                 --train_batch_size=64 \
