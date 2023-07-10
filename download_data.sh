@@ -25,3 +25,18 @@ kaggle datasets download valebi/esri-streetmap-tiles --unzip --path esri-streetm
 kaggle datasets download selinnbaris/processed-bing-dataset --unzip --path processed-bing-dataset
 #kaggle kernels output ahmetalperozudogru/bingscrape-noarrow --path bingscrape-noarrow
 #kaggle datasets  download esri-streetmap-tiles --unzip --path esri-streetmap-tiles
+wget -O roadtracing.zip "https://polybox.ethz.ch/index.php/s/USLJotE9cgtZPMr/download?path=%2F&files=roadtracing.zip"
+unzip roadtracing.zip -q
+rm roadtracing.zip
+zip -FFv roadtracing.zip --out roadtracing_fixed.zip -q
+unzip roadtracing_fixed.zip -q
+rm roadtracing_fixed.zip
+
+wget -O epfl.zip "https://polybox.ethz.ch/index.php/s/USLJotE9cgtZPMr/download?path=%2F&files=epfl.zip"
+unzip epfl.zip -q
+rm epfl.zip
+
+#wget -O deepglobe.zip "https://polybox.ethz.ch/index.php/s/USLJotE9cgtZPMr/download?path=%2F&files=deepglobe.zip"
+#unzip deepglobe.zip -q
+#rm deepglobe.zip
+
