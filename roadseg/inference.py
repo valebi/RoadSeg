@@ -1,6 +1,8 @@
 import glob
+import logging
 import os
 
+import kaggle
 import numpy as np
 import PIL
 import torch
@@ -54,3 +56,12 @@ def make_ensemble(CFG):
 def make_submission(CFG):
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
     masks_to_submission(CFG.submission_file, "", *image_filenames)
+    try:
+        kaggle.api.competition_submit(
+            file_name=CFG.submission_file,
+            message=f"autosubmit: {CFG.experiment_name}",
+            competition="ethz-cil-road-segmentation-2023",
+        )
+        logging.info("Submitted output to kaggle")
+    except:
+        logging.info("Failed to submit to kaggle")

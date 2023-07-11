@@ -7,19 +7,21 @@
             "program": "${workspaceFolder}/main.py",
             "justMyCode": true,
             "args": [
+                "--experiment_tag",
+                "local_debug",
                 "--device",
                 "cpu",
                 "--smp_backbone",
                 "dummy-unet",
+
                 "--train_batch_size",
                 "1",
                 "--val_batch_size",
                 "1",
                 "--datasets",
-                "maptiler",
-                "--n_finetuning_folds",
-                "1",
-                "--no_pretrain",
+                "roadtracing",
+                "--max_per_dataset",
+                "32",
                 "--make_submission",
                 "--num_workers",
                 "2",
@@ -29,10 +31,14 @@
                 "2",
                 "--finetuning_epochs",
                 "1",
-                "--initial_model",
-                "/Users/onat/School/RoadSeg/temp_folder/chk.bin",
-                "--model_download_drive_id",
-                "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
+                "--pretraining_epochs",
+                "2",
+                "--scheduler",
+                "cosine_warm_restarts",
+                // "--initial_model",
+                // "/Users/onat/School/RoadSeg/temp_folder/chk.bin",
+                // "--model_download_drive_id",
+                // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
                 // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
                 
             ]

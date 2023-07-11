@@ -35,15 +35,6 @@ def get_albumentations(CFG):
                 ],
                 p=0.15,
             ),
-            A.CoarseDropout(
-                max_holes=5,
-                max_height=CFG.img_size // 20,
-                max_width=CFG.img_size // 20,
-                min_holes=2,
-                fill_value=0,
-                mask_fill_value=0,
-                p=0.1,
-            ),
         ],
         p=1.0,
     )

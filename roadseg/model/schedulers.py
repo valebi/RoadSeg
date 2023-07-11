@@ -10,8 +10,14 @@ def fetch_scheduler(optimizer, CFG, is_finetuning, n_train_batches):
             optimizer, T_max=T_max, eta_min=CFG.min_lr
         )  # , last_epoch=epochs-1)
     elif CFG.scheduler == "cosine_warm_restarts":
+        virt_train_batches = min(n_train_batches, 10000 // CFG.train_batch_size)
+        # start by restarting after one epoch, double the restarting rate
         scheduler = lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer, T_0=n_train_batches, eta_min=CFG.min_lr, last_epoch=epochs - 1, T_mult=1.5
+            optimizer,
+            T_0=virt_train_batches,  # limit the virtual dataset size to 10k samples
+            eta_min=CFG.min_lr,
+            T_mult=2,
+            verbose=True,
         )
     elif CFG.scheduler == "plateau":
         scheduler = lr_scheduler.ReduceLROnPlateau(

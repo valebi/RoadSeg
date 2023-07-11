@@ -43,15 +43,17 @@ def train_one_epoch(
     running_loss = 0.0
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
-    for step, (images, masks) in pbar:
+    for step, (images, labels) in pbar:
         images = images.to(device, dtype=torch.float)
-        masks = masks.to(device, dtype=torch.long)
+        labels = labels.to(device, dtype=torch.long)
+        labels, loss_mask = labels[:, 0], labels[:, 1]
 
         batch_size = images.size(0)
 
         with amp.autocast(enabled=True):
             y_pred = model(images)
-            loss = criterion(y_pred, masks)
+            y_pred = y_pred * loss_mask[:, None]
+            loss = criterion(y_pred, labels)
             loss = loss / n_accumulate
 
         scaler.scale(loss).backward()
@@ -76,6 +78,7 @@ def train_one_epoch(
             global_step = step + ((epoch - 1) * len(dataloader))  ##Since epoch starts from 1
             if global_step % 10 == 0:
                 wandb.log({f"{model_name}/epoch_loss": epoch_loss}, step=global_step)
+                wandb.log({f"{model_name}/lr": optimizer.param_groups[0]["lr"]}, step=global_step)
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
         current_lr = optimizer.param_groups[0]["lr"]
@@ -98,14 +101,16 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion):
     val_scores = []
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
-    for step, (images, masks) in pbar:
+    for step, (images, labels) in pbar:
         images = images.to(device, dtype=torch.float)
-        masks = masks.to(device, dtype=torch.long)
+        labels = labels.to(device, dtype=torch.long)
+        labels, loss_mask = labels[:, 0], labels[:, 1]
 
         batch_size = images.size(0)
 
         y_pred = model(images)
-        loss = criterion(y_pred, masks)
+        y_pred = y_pred * loss_mask[:, None]
+        loss = criterion(y_pred, labels)
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
@@ -114,8 +119,8 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion):
 
         # logging.info("Before", y_pred.shape)
         y_pred = torch.nn.functional.softmax(y_pred, dim=1)[:, 1]
-        val_prec = precision(y_pred.cpu(), masks.cpu())
-        val_rec = recall(y_pred.cpu(), masks.cpu())
+        val_prec = precision(y_pred.cpu(), labels.cpu())
+        val_rec = recall(y_pred.cpu(), labels.cpu())
         val_scores.append([val_prec, val_rec])
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
@@ -132,7 +137,7 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion):
     torch.cuda.empty_cache()
     gc.collect()
 
-    return epoch_loss, val_scores, images, y_pred, masks
+    return epoch_loss, val_scores, images, y_pred, labels
 
 
 def run_training(

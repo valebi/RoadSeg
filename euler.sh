@@ -19,11 +19,12 @@ COMMAND="python main.py \
                 --out_dir="${OUT_DIR}" \
                 --make_submission \
                 --max_per_dataset=1000 \
-                --datasets esri \
+                --datasets bing-clean \
                 --smp_backbone="timm-regnety_080" \
+                --smp_encoder_init_weights \
                 --pretraining_epochs=1 \
                 --finetuning_epochs=5 \
-                --train_batch_size=96 \
+                --train_batch_size=64 \
                 --val_batch_size=128
 "
 echo "${COMMAND}"
