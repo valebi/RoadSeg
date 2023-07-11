@@ -78,7 +78,7 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         default=["hofmann"],
         type=str,
-        choices=["cil", "hofmann", "maptiler", "esri", "bing", "bing-clean"],
+        choices=["cil", "hofmann", "maptiler", "esri", "bing", "bing-clean", "roadtracing"],
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
