@@ -64,6 +64,16 @@ class SegmentationDataset(torch.utils.data.Dataset):
         img, lbl = torch.transpose(torch.tensor(img), 0, 2), torch.transpose(
             torch.tensor(lbl), 0, 2
         )
+
+        """
+        import matplotlib.pyplot as plt
+        plt.subplot(1, 2, 1)
+        plt.imshow(img.permute(1, 2, 0))
+        plt.subplot(1, 2, 2)
+        plt.imshow(lbl.permute(1, 2, 0)[:, :, 0])
+        plt.show()
+        """
+
         return (
             img / 255,
             (lbl / 255).type(torch.uint8),
@@ -204,6 +214,27 @@ class CleanBingDataset(SegmentationDataset):
         self._ensure_size()
 
 
+class RoadtracingDataset(SegmentationDataset):
+    def __init__(self, CFG, transforms=None, max_samples=-1):
+        # @TODO load the useless ones too
+        super().__init__(transforms, max_samples)
+        lbls = glob(CFG.data_dir + "/roadtracing/processed/groundtruth/*.png")
+        self.img_paths = [
+            f
+            for f in glob(CFG.data_dir + "/roadtracing/processed/images/*.png")
+            if f.replace("images", "groundtruth") in lbls
+        ]
+        self.lbl_paths = [f.replace("images", "groundtruth") for f in self.img_paths]
+        self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
+            CFG.img_size,
+            CFG.img_size,
+            scale=(0.85, 1.15),
+            ratio=(0.75, 1.3333333333333333),
+            interpolation=cv2.INTER_LINEAR,
+        )
+        self._ensure_size()
+
+
 dataset_map = {
     "hofmann": HofmannDataset,
     "cil": CIL23Dataset,
@@ -211,4 +242,5 @@ dataset_map = {
     "esri": ESRIDataset,
     "bing": BingDataset,
     "bing-clean": CleanBingDataset,
+    "roadtracing": RoadtracingDataset,
 }
