@@ -63,5 +63,6 @@ def make_submission(CFG):
             competition="ethz-cil-road-segmentation-2023",
         )
         logging.info("Submitted output to kaggle")
-    except:
+    except Exception as e:
         logging.info("Failed to submit to kaggle")
+        logging.info(str(e))
