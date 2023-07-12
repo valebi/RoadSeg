@@ -19,8 +19,10 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     img_files = [f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")]
     ##Added resize to match the training size
     imgs = [
-        np.array(Image.open(os.path.join(CFG.test_imgs_dir, f))).resize(
-            (CFG.img_size, CFG.img_size), Image.Resampling.BILINEAR
+        np.array(
+            Image.open(os.path.join(CFG.test_imgs_dir, f)).resize(
+                (CFG.img_size, CFG.img_size), Image.Resampling.BILINEAR
+            )
         )[:, :, :3]
         for f in img_files
     ]
