@@ -46,7 +46,6 @@ def train_one_epoch(
         with amp.autocast(enabled=True):
             y_pred = model(images)
             y_pred = y_pred * loss_mask[:, None]
-            temp = smp.losses.DiceLoss(mode='multilabel', from_logits = True)(y_pred, labels)
             loss = criterion(y_pred, labels)
             loss = loss / n_accumulate
 
