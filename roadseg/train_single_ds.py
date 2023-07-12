@@ -270,7 +270,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         scheduler,
         train_loader,
         val_loader,
-        criterion=dice_loss,
+        criterion=BCELoss,  # dice_loss,
         device=CFG.device,
         use_wandb=CFG.wandb,
         log_dir=CFG.log_dir,
