@@ -20,7 +20,8 @@ from tqdm import tqdm
 from roadseg.inference import generate_predictions
 from roadseg.model.metrics import (
     BCELoss,
-    dice_coef,
+    DiceLoss,
+    dice_loss,
     f1_loss,
     iou_coef,
     precision,
@@ -101,10 +102,10 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion):
     val_scores = []
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
-    for step, (images, labels) in pbar:
+    for step, (images, masks) in pbar:
         images = images.to(device, dtype=torch.float)
-        labels = labels.to(device, dtype=torch.long)
-        labels, loss_mask = labels[:, 0], labels[:, 1]
+        masks = masks.to(device, dtype=torch.long)
+        labels, loss_mask = masks[:, 0], masks[:, 1]
 
         batch_size = images.size(0)
 
@@ -304,7 +305,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             scheduler,
             train_loader,
             val_loader,
-            criterion=reg_f1_loss,
+            criterion=dice_loss,  # reg_f1_loss,
             device=CFG.device,
             use_wandb=CFG.wandb,
             log_dir=CFG.log_dir,
