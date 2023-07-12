@@ -65,6 +65,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
             torch.tensor(lbl), 0, 2
         )
 
+        """
         import matplotlib.pyplot as plt
 
         plt.subplot(1, 2, 1)
@@ -72,6 +73,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
         plt.subplot(1, 2, 2)
         plt.imshow(lbl.permute(1, 2, 0)[:, :, 0])
         plt.show()
+        """
 
         return (
             img / 255,
@@ -245,7 +247,7 @@ class EPFLDataset(SegmentationDataset):
         self._ensure_size()
 
     def label_transform(self, lbl):
-        return (lbl == 237).astype(np.uint8) * 255
+        return (lbl > 150).astype(np.uint8) * 255
 
 
 dataset_map = {
