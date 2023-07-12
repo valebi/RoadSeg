@@ -326,4 +326,6 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         gc.collect()
 
     logging.info("Best F1 scores after FT: {}".format(np.mean(f1_scores)))
+    if CFG.wandb:
+        wandb.log({"mean_f1": np.mean(f1_scores)})
     return np.mean(f1_scores)

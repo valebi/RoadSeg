@@ -65,14 +65,13 @@ class SegmentationDataset(torch.utils.data.Dataset):
             torch.tensor(lbl), 0, 2
         )
 
-        """
         import matplotlib.pyplot as plt
+
         plt.subplot(1, 2, 1)
         plt.imshow(img.permute(1, 2, 0))
         plt.subplot(1, 2, 2)
         plt.imshow(lbl.permute(1, 2, 0)[:, :, 0])
         plt.show()
-        """
 
         return (
             img / 255,
