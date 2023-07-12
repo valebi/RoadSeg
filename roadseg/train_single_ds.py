@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.optim as optim
+import torchmetrics
 import wandb
 from sklearn.model_selection import KFold, StratifiedGroupKFold, StratifiedKFold
 from torch.cuda import amp
@@ -22,6 +23,8 @@ from roadseg.model.metrics import (
     BCELoss,
     dice_coef,
     f1_loss,
+    get_loss,
+    get_metrics,
     iou_coef,
     precision,
     recall,
@@ -92,13 +95,17 @@ def train_one_epoch(
 
 
 @torch.no_grad()
-def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion):
+def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metrics_to_watch):
     model.eval()
 
     dataset_size = 0
     running_loss = 0.0
 
-    val_scores = []
+    val_scores = [None] *len(metrics_to_watch)
+
+    for metric in metrics_to_watch:
+        if hasattr(metric, "reset"):
+            metric.reset()
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
     for step, (images, labels) in pbar:
@@ -119,21 +126,25 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion):
 
         # logging.info("Before", y_pred.shape)
         y_pred = torch.nn.functional.softmax(y_pred, dim=1)[:, 1]
-        val_prec = precision(y_pred.cpu(), labels.cpu())
-        val_rec = recall(y_pred.cpu(), labels.cpu())
-        val_scores.append([val_prec, val_rec])
+
+        # val_prec = precision(y_pred.cpu(), labels.cpu())
+        # val_rec = recall(y_pred.cpu(), labels.cpu())
+        
+        for i,metric in enumerate(metrics_to_watch):
+            val_scores[i] = metric(y_pred, labels).item()
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
         current_lr = optimizer.param_groups[0]["lr"]
         pbar.set_postfix(
             valid_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_memory=f"{mem:0.2f} GB"
         )
-    val_scores = np.mean(val_scores, axis=0)
-    val_scores = [
-        val_scores[0],
-        val_scores[1],
-        (2 * ((val_scores[0] * val_scores[1]) / (val_scores[0] + val_scores[1]))),
-    ]
+
+    # val_scores = np.mean(val_scores, axis=0)
+    # val_scores = [
+    #     val_scores[0],
+    #     val_scores[1],
+    #     (2 * ((val_scores[0] * val_scores[1]) / (val_scores[0] + val_scores[1]))),
+    # ]
     torch.cuda.empty_cache()
     gc.collect()
 
@@ -153,6 +164,7 @@ def run_training(
     use_wandb,
     log_dir,
     plot_freq=3,
+    metrics_to_watch=None,
 ):
     # To automatically log gradients
 
@@ -181,9 +193,9 @@ def run_training(
             use_wandb=use_wandb,
             model_name=model_name,
         )
-
+        metrics_to_watch_fn = get_metrics(metrics_to_watch)
         val_loss, val_scores, last_in, last_pred, last_msk = valid_one_epoch(
-            model, valid_loader, optimizer, criterion=criterion, device=device, epoch=epoch
+            model, valid_loader, optimizer, criterion=criterion, device=device, epoch=epoch, metrics_to_watch = metrics_to_watch_fn
         )
 
         if plot_freq >= 1 and epoch % plot_freq == 1:
@@ -197,13 +209,13 @@ def run_training(
         if use_wandb:
             log_images(last_in.cpu().numpy(), last_msk.cpu().numpy(), last_pred.cpu().numpy())
 
-        val_precision, val_recall, val_f1 = val_scores
+        # val_precision, val_recall, val_f1 = val_scores
 
         history["Train Loss"].append(train_loss)
         history["Valid Loss"].append(val_loss)
-        history["Valid F1"].append(val_f1)
-        history["Valid Precision"].append(val_precision)
-        history["Valid Recall"].append(val_recall)
+        for metric, score in zip(metrics_to_watch, val_scores):
+            history[f"Valid {metric}"].append(score)
+   
 
         if use_wandb:
             # @TODO: Reintroduce global step with offset or similar
@@ -211,11 +223,10 @@ def run_training(
             log_dict = {
                 f"{model_name}/Train Loss": train_loss,
                 f"{model_name}/Valid Loss": val_loss,
-                f"{model_name}/Valid F1": val_f1,
-                f"{model_name}/Valid Precision": val_precision,
-                f"{model_name}/Valid Recall": val_recall,
                 f"{model_name}/Epoch": epoch,
             }
+            for metric, score in zip(metrics_to_watch, val_scores):
+                log_dict[f"{model_name}/Valid {metric}"] = score
 
             if "finetune" in model_name:
                 wandb.log(log_dict)
@@ -223,8 +234,11 @@ def run_training(
                 global_step = epoch * len(train_loader)
                 wandb.log(log_dict, step=global_step)
 
+        log_str = f"Valid Loss: {val_loss:0.4f}"
+        for metric, score in zip(metrics_to_watch, val_scores):
+            log_str += f" | Valid {metric}: {score:0.4f}"
         logging.info(
-            f"Valid Loss: {val_loss:0.4f} | Valid F1: {val_f1:0.4f} | Valid Precision: {val_precision:0.4f} | Valid Recall: {val_recall:0.4f}"
+            f"Epoch {epoch}/{num_epochs} | {log_str}"
         )
 
         # deep copy the model
@@ -262,6 +276,8 @@ def pretrain_model(CFG, model, train_loader, val_loader):
     )
     if CFG.wandb:
         wandb.watch(model, criterion=BCELoss, log_freq=100)
+    
+    
     model, history_pre = run_training(
         model,
         model_name,
@@ -269,11 +285,12 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         scheduler,
         train_loader,
         val_loader,
-        criterion=BCELoss,
+        criterion= get_loss(CFG.pretraining_loss),
         device=CFG.device,
         use_wandb=CFG.wandb,
         log_dir=CFG.log_dir,
         num_epochs=CFG.pretraining_epochs,
+        metrics_to_watch=CFG.metrics_to_watch,
     )
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 4))
@@ -309,6 +326,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             use_wandb=CFG.wandb,
             log_dir=CFG.log_dir,
             num_epochs=CFG.finetuning_epochs,
+            metrics_to_watch=CFG.metrics_to_watch,
         )
 
         generate_predictions(model, CFG, fold=fold)
@@ -320,7 +338,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         ax.legend(["train loss", "val loss"])
         fig.savefig(os.path.join(CFG.log_dir, f"finetuning_loss_fold_{fold}.png"))
         # plt.show()
-        f1_scores.append(np.max(history["Valid F1"]))
+        # f1_scores.append(np.max(history["Valid F1"])) ##Needs to be added back later with monitoring
 
         gc.collect()
 

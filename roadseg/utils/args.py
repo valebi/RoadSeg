@@ -153,6 +153,7 @@ def parse_args() -> argparse.Namespace:
         "--smp_backbone",
         type=str,
         default="timm-regnety_080",
+        # choices=["timm-regnety_080", "dummy-unet", "efficientnet-b5"],
         help="Backbone for pytorch-segmentation-models",
     )
     parser.add_argument(
@@ -184,6 +185,27 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=2e-3,
         help="Learning rate for pretraining.",
+    )
+    parser.add_argument(
+        "--metrics_to_watch",
+        nargs="+",
+        type=str,
+        default=["iou"],
+        choices=["iou", "f1", "precision", "recall"],
+        help="Metrics to watch during training.",
+    )
+    parser.add_argument(
+        "--metric_to_monitor",
+        type=str,
+        default=["iou"],
+        choices=["iou", "f1", "precision", "recall"],
+        help="Metric to monitor during training. Will be used to report the best score and selection of the best model.",
+    )
+    parser.add_argument(
+        "--pretraining_loss",
+        type=str,
+        default="bce",
+        help="Loss to be used for pretraining.",
     )
     parser.add_argument(
         "--finetuning_epochs",
