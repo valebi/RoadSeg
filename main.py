@@ -37,7 +37,6 @@ def main(CFG: Namespace):
 
     model = build_model(CFG, num_classes=2)
 
-    
     if CFG.debug:
         imgs, msks = next(iter(train_loader))
         plot_batch(
