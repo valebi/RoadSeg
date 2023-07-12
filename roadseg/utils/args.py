@@ -192,14 +192,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default=["iou"],
         choices=["iou", "f1", "precision", "recall"],
-        help="Metrics to watch during training.",
-    )
-    parser.add_argument(
-        "--metric_to_monitor",
-        type=str,
-        default=["iou"],
-        choices=["iou", "f1", "precision", "recall"],
-        help="Metric to monitor during training. Will be used to report the best score and selection of the best model.",
+        help="Metrics to watch during training. Metric to monitor during training is the first argument it will be used to report the best score and selection of the best model.",
     )
     parser.add_argument(
         "--pretraining_loss",
