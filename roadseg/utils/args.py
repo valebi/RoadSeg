@@ -144,6 +144,12 @@ def parse_args() -> argparse.Namespace:
         help="One can download the initial_model weights from a public made google drive file.",
     )
     parser.add_argument(
+        "--decoder_depth",
+        type=int,
+        default=4,
+        help="Decoder depth for pytorch-segmentation-models. Can only be 4 or 5. Image size must be divisible by 2^decoder_depth.",
+    )
+    parser.add_argument(
         "--smp_backbone",
         type=str,
         default="timm-regnety_080",
