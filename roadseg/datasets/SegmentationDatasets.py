@@ -244,6 +244,9 @@ class EPFLDataset(SegmentationDataset):
         )
         self._ensure_size()
 
+    def label_transform(self, lbl):
+        return (lbl == 237).astype(np.uint8) * 255
+
 
 dataset_map = {
     "hofmann": HofmannDataset,

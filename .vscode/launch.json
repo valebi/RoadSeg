@@ -26,7 +26,7 @@
                 "--num_workers",
                 "2",
                 "--img_size",
-                "64",
+                "400",
                 "--n_finetuning_folds",
                 "2",
                 "--finetuning_epochs",
