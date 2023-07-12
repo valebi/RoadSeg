@@ -198,7 +198,15 @@ def parse_args() -> argparse.Namespace:
         "--pretraining_loss",
         type=str,
         default="bce",
+        choices=["bce", "reg_f1", "smp_dice", "smp_jaccard", "smp_lovasz","smp_tversky" , "smp_soft_ce"],
         help="Loss to be used for pretraining.",
+    )
+    parser.add_argument(
+        "--finetuning_loss",
+        type=str,
+        default="reg_f1",
+        choices=["bce", "reg_f1", "smp_dice", "smp_jaccard", "smp_lovasz","smp_tversky" , "smp_soft_ce"],
+        help="Loss to be used for finetuning.",
     )
     parser.add_argument(
         "--finetuning_epochs",

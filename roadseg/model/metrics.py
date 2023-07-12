@@ -6,9 +6,10 @@ import torch.nn as nn
 import torchmetrics
 
 # @TODO: CLEANUP
+##These all throws errors? Fixed versions below
 JaccardLoss = smp.losses.JaccardLoss(mode='multilabel')
 DiceLoss    = smp.losses.DiceLoss(mode='multilabel')
-#BCELoss     = smp.losses.SoftBCEWithLogitsLoss()
+# BCELoss     = smp.losses.SoftBCEWithLogitsLoss()
 BCELoss     = nn.CrossEntropyLoss()
 LovaszLoss  = smp.losses.LovaszLoss(mode='multilabel', per_image=False)
 TverskyLoss = smp.losses.TverskyLoss(mode='multilabel', log_loss=False)
@@ -28,14 +29,14 @@ def dice_coef(y_true, y_pred, thr=0.5, dim=(2,3), epsilon=0.001):
     return dice
 
 ##Throws error
-def iou_coef(y_true, y_pred, thr=0.5, dim=(2,3), epsilon=0.001):
-    """ @TODO add source"""
-    y_true = y_true.to(torch.float32)
-    y_pred = (y_pred>thr).to(torch.float32)
-    inter = (y_true*y_pred).sum(dim=dim)
-    union = (y_true + y_pred - y_true*y_pred).sum(dim=dim)
-    iou = ((inter+epsilon)/(union+epsilon)).mean(dim=(1,0))
-    return iou
+# def iou_coef(y_true, y_pred, thr=0.5, dim=(2,3), epsilon=0.001):
+#     """ @TODO add source"""
+#     y_true = y_true.to(torch.float32)
+#     y_pred = (y_pred>thr).to(torch.float32)
+#     inter = (y_true*y_pred).sum(dim=dim)
+#     union = (y_true + y_pred - y_true*y_pred).sum(dim=dim)
+#     iou = ((inter+epsilon)/(union+epsilon)).mean(dim=(1,0))
+#     return iou
 
 # ported from https://www.kaggle.com/code/rejpalcz/best-loss-function-for-f1-score-metric/notebook
 def f1_loss(y_pred, y_true, eps=1e-10, road_class=1):
@@ -62,6 +63,12 @@ def reg_f1_loss(y_pred, y_true):
 def get_loss(name: str):
     loss_dict = {
         "bce" : BCELoss,
+        "reg_f1" : reg_f1_loss,
+        "smp_dice" : smp.losses.DiceLoss(mode='multiclass'),
+        "smp_jaccard" : smp.losses.JaccardLoss(mode='multiclass'),
+        "smp_lovasz" : smp.losses.LovaszLoss(mode='multiclass', per_image=False), ##Per image does not change the result
+        "smp_tversky" : smp.losses.TverskyLoss(mode='multiclass'),
+        "smp_soft_ce" : smp.losses.SoftCrossEntropyLoss(smooth_factor= 0.1),
         }
 
     loss = loss_dict.get(name, None)
@@ -69,6 +76,9 @@ def get_loss(name: str):
         raise ValueError(f"Loss {name} not found")
     return loss
 
+
+
+##ACTUAL Metrics
 def get_metrics(names: List[str]):
 
     metrics_dict = {

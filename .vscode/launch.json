@@ -5,7 +5,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
-            "justMyCode": true,
+            "justMyCode": false,
             "args": [
                 "--experiment_tag",
                 "local_debug",
@@ -38,6 +38,8 @@
                 "5",
                 "--pretraining_loss",
                 "bce",
+                "--finetuning_loss",
+                "reg_f1",
                 "--metrics_to_watch",
                 "f1",
                 "precision",

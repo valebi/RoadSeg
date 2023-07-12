@@ -9,9 +9,9 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
+import segmentation_models_pytorch as smp
 import torch
 import torch.optim as optim
-import torchmetrics
 import wandb
 from sklearn.model_selection import KFold, StratifiedGroupKFold, StratifiedKFold
 from torch.cuda import amp
@@ -19,24 +19,14 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from roadseg.inference import generate_predictions
-from roadseg.model.metrics import (
-    BCELoss,
-    dice_coef,
-    f1_loss,
-    get_loss,
-    get_metrics,
-    iou_coef,
-    precision,
-    recall,
-    reg_f1_loss,
-)
+from roadseg.model.metrics import get_loss, get_metrics
 from roadseg.model.schedulers import fetch_scheduler
 from roadseg.utils.plots import plot_batch
 from roadseg.utils.utils import log_images
 
 
 def train_one_epoch(
-    model, optimizer, scheduler, dataloader, device, epoch, criterion, use_wandb, model_name, metric_to_watch):
+    model, optimizer, scheduler, dataloader, device, epoch, criterion, use_wandb, model_name, metric_to_monitor):
 
     n_accumulate = 1  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
     model.train()
@@ -56,6 +46,7 @@ def train_one_epoch(
         with amp.autocast(enabled=True):
             y_pred = model(images)
             y_pred = y_pred * loss_mask[:, None]
+            temp = smp.losses.DiceLoss(mode='multilabel', from_logits = True)(y_pred, labels)
             loss = criterion(y_pred, labels)
             loss = loss / n_accumulate
 
@@ -73,7 +64,7 @@ def train_one_epoch(
                 if not isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                     scheduler.step()
                 else:
-                    scheduler.step(metric_to_watch)
+                    scheduler.step(metric_to_monitor)
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
@@ -183,7 +174,7 @@ def run_training(
     history = defaultdict(list)
 
     best_score = -np.inf
-    metric_to_watch = -np.inf
+    metric_to_monitor = -np.inf
     for epoch in range(1, num_epochs + 1):
         gc.collect()
         logging.info(f"Epoch {epoch}/{num_epochs}")
@@ -197,13 +188,13 @@ def run_training(
             epoch=epoch,
             use_wandb=use_wandb,
             model_name=model_name,
-            metric_to_watch = metric_to_watch
+            metric_to_monitor = metric_to_monitor
         )
         metrics_to_watch_fn = get_metrics(metrics_to_watch)
         val_loss, val_scores, last_in, last_pred, last_msk = valid_one_epoch(
             model, valid_loader, optimizer, criterion=criterion, device=device, epoch=epoch, metrics_to_watch = metrics_to_watch_fn
         )
-        metric_to_watch = val_scores[0]
+        metric_to_monitor = val_scores[0]
 
         if plot_freq >= 1 and epoch % plot_freq == 1:
             plot_batch(
@@ -255,9 +246,9 @@ def run_training(
         #     torch.save(model.state_dict(), PATH)
         #     logging.info(f"Model Saved under {PATH}")
 
-        if metric_to_watch >= best_score:
-            logging.info(f"Watch Metric {metrics_to_watch[0]} Increased ({best_score:0.4f} ---> {metric_to_watch:0.4f})")
-            best_score = metric_to_watch
+        if metric_to_monitor >= best_score:
+            logging.info(f"Monitoring Metric {metrics_to_watch[0]} Increased ({best_score:0.4f} ---> {metric_to_monitor:0.4f})")
+            best_score = metric_to_monitor
             best_model_wts = copy.deepcopy(model.state_dict())
             PATH = os.path.join(log_dir, "weights", f"best_epoch-{model_name}.bin")
             torch.save(model.state_dict(), PATH)
@@ -273,7 +264,7 @@ def run_training(
             time_elapsed // 3600, (time_elapsed % 3600) // 60, (time_elapsed % 3600) % 60
         )
     )
-    logging.info("Best Score: {:.4f}".format(best_score))
+    logging.info("Best Monitoring Metric Score: {:.4f}".format(best_score))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
@@ -289,7 +280,6 @@ def pretrain_model(CFG, model, train_loader, val_loader):
     )
     if CFG.wandb:
         wandb.watch(model, criterion=get_loss(CFG.pretraining_loss), log_freq=100)
-    
     
     model, history_pre = run_training(
         model,
@@ -334,7 +324,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             scheduler,
             train_loader,
             val_loader,
-            criterion=reg_f1_loss,
+            criterion=get_loss(CFG.finetuning_loss),
             device=CFG.device,
             use_wandb=CFG.wandb,
             log_dir=CFG.log_dir,
