@@ -234,7 +234,7 @@ class EPFLDataset(SegmentationDataset):
     def __init__(self, CFG, transforms=None, max_samples=-1):
         # @TODO load the useless ones too
         super().__init__(transforms, max_samples)
-        self.img_paths = glob(CFG.data_dir + "/epfl/processed/images/*.png")
+        self.img_paths = glob(CFG.data_dir + "/epfl-roadseg/processed/images/*.png")
         self.lbl_paths = [f.replace("images", "groundtruth") for f in self.img_paths]
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
             CFG.img_size,
