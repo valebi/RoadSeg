@@ -23,11 +23,11 @@ You need to add the following kaggle secrets:
 1. Clone the git repo to /cluster/home/{user}/cil 
 [ git clone https://TOKEN@github.com/valebi/RoadSeg.git ]
 2. Get a kaggle.json authentication file from https://www.kaggle.com/settings > API > generate token and upload it to RoadSeg
-3. Change the $USER variable in the first line and then run
+3. Run
 ''' 
 sh download_data.sh
 '''
-4. Change the $USER variable in the first line and then 
+4. Run
 '''
 sh euler.sh
 '''
