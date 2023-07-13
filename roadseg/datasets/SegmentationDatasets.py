@@ -121,7 +121,7 @@ class HofmannDataset(SegmentationDataset):
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
             CFG.img_size,
             CFG.img_size,
-            scale=(0.3, 0.5),
+            scale=(0.4, 0.6),
             ratio=(0.75, 1.3333333333333333),
             interpolation=cv2.INTER_LINEAR,
         )
