@@ -67,6 +67,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
 
         """
         import matplotlib.pyplot as plt
+
         plt.subplot(1, 2, 1)
         plt.imshow(img.permute(1, 2, 0))
         plt.subplot(1, 2, 2)
@@ -127,7 +128,7 @@ class HofmannDataset(SegmentationDataset):
         self._ensure_size()
 
     def label_transform(self, lbl):
-        return 255 - lbl[:, :, :0]
+        return 255 - lbl[:, :, 0]
 
 
 class ESRIDataset(SegmentationDataset):
@@ -218,12 +219,7 @@ class RoadtracingDataset(SegmentationDataset):
     def __init__(self, CFG, transforms=None, max_samples=-1):
         # @TODO load the useless ones too
         super().__init__(transforms, max_samples)
-        lbls = glob(CFG.data_dir + "/roadtracing/processed/groundtruth/*.png")
-        self.img_paths = [
-            f
-            for f in glob(CFG.data_dir + "/roadtracing/processed/images/*.png")
-            if f.replace("images", "groundtruth") in lbls
-        ]
+        self.img_paths = glob(CFG.data_dir + "/roadtracing/processed/images/*.png")
         self.lbl_paths = [f.replace("images", "groundtruth") for f in self.img_paths]
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
             CFG.img_size,
@@ -235,6 +231,25 @@ class RoadtracingDataset(SegmentationDataset):
         self._ensure_size()
 
 
+class EPFLDataset(SegmentationDataset):
+    def __init__(self, CFG, transforms=None, max_samples=-1):
+        # @TODO load the useless ones too
+        super().__init__(transforms, max_samples)
+        self.img_paths = glob(CFG.data_dir + "/epfl-roadseg/processed/images/*.png")
+        self.lbl_paths = [f.replace("images", "groundtruth") for f in self.img_paths]
+        self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
+            CFG.img_size,
+            CFG.img_size,
+            scale=(0.85, 1.15),
+            ratio=(0.75, 1.3333333333333333),
+            interpolation=cv2.INTER_LINEAR,
+        )
+        self._ensure_size()
+
+    def label_transform(self, lbl):
+        return (lbl > 150).astype(np.uint8) * 255
+
+
 dataset_map = {
     "hofmann": HofmannDataset,
     "cil": CIL23Dataset,
@@ -243,4 +258,5 @@ dataset_map = {
     "bing": BingDataset,
     "bing-clean": CleanBingDataset,
     "roadtracing": RoadtracingDataset,
+    "epfl": EPFLDataset,
 }
