@@ -28,7 +28,7 @@ kaggle datasets download selinnbaris/processed-bing-dataset --unzip --path proce
 wget -O roadtracing.zip "https://polybox.ethz.ch/index.php/s/USLJotE9cgtZPMr/download?path=%2F&files=roadtracing.zip"
 #unzip roadtracing.zip -q
 #rm roadtracing.zip
-zip -FFv roadtracing.zip --out roadtracing_fixed.zip -q
+zip -FFv -q roadtracing.zip --out roadtracing_fixed.zip
 unzip -q roadtracing_fixed.zip
 
 wget -O epfl-roadseg.zip "https://polybox.ethz.ch/index.php/s/USLJotE9cgtZPMr/download?path=%2F&files=epfl.zip"
