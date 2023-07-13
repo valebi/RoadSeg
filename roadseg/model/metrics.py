@@ -191,7 +191,7 @@ class CompF1:
         y_pred_p = (self.pooling(y_pred.to(torch.float)) > self.threshold).to(torch.long)
         tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
             threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
-        )(y_pred_p, y_true_p)
+        )(y_pred_p.cpu(), y_true_p.cpu())
         self.tp += tp
         self.fp += fp
         self.tn += tn
