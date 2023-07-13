@@ -33,7 +33,7 @@
                 "--pretraining_epochs",
                 "1",
                 "--scheduler",
-                "cosine_warm_restarts",
+                "plateau",
                 "--decoder_depth",
                 "5",
                 "--pretraining_loss",
@@ -42,6 +42,7 @@
                 "reg_f1",
                 "--metrics_to_watch",
                 "f1",
+                "compf1",
                 "precision",
                 "recall",
                 "iou"
