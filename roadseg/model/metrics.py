@@ -4,6 +4,7 @@ import segmentation_models_pytorch as smp
 import torch
 import torch.nn as nn
 import torchmetrics
+import torchmetrics.classification
 
 # @TODO: CLEANUP
 ##These all throws errors? Fixed versions below
@@ -110,7 +111,7 @@ class AccumulatedRecall:
         self.tn = 0
 
     def __call__(self,y_pred, y_true):
-        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(threshold=0.5, multidim_average='global', ignore_index=None, validate_args=True)(y_pred, y_true)
+        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(threshold=0.5, multidim_average='global', ignore_index=None, validate_args=True)(y_pred.cpu(), y_true.cpu())
         self.tp += tp
         self.fp += fp
         self.tn += tn
@@ -130,7 +131,7 @@ class AccumulatedPrecision:
         self.tn = 0
 
     def __call__(self,y_pred, y_true):
-        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(threshold=0.5, multidim_average='global', ignore_index=None, validate_args=True)(y_pred, y_true)
+        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(threshold=0.5, multidim_average='global', ignore_index=None, validate_args=True)(y_pred.cpu(), y_true.cpu())
         self.tp += tp
         self.fp += fp
         self.tn += tn
@@ -150,7 +151,7 @@ class AccumulatedF1:
         self.tn = 0
 
     def __call__(self,y_pred, y_true):
-        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(threshold=0.5, multidim_average='global', ignore_index=None, validate_args=True)(y_pred, y_true)
+        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(threshold=0.5, multidim_average='global', ignore_index=None, validate_args=True)(y_pred.cpu(), y_true.cpu())
         self.tp += tp
         self.fp += fp
         self.tn += tn
@@ -171,6 +172,6 @@ class IOU:
         current_batch_size = y_pred.shape[0]
         self.total_samples += current_batch_size
 
-        self.iou += (current_batch_size * torchmetrics.classification.BinaryJaccardIndex()(y_pred, y_true))
+        self.iou += (current_batch_size * torchmetrics.classification.BinaryJaccardIndex()(y_pred.cpu(), y_true.cpu()))
 
         return self.iou / self.total_samples
