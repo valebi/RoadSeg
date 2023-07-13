@@ -127,7 +127,7 @@ class HofmannDataset(SegmentationDataset):
         self._ensure_size()
 
     def label_transform(self, lbl):
-        return 255 - lbl[:, :, :1]
+        return 255 - lbl[:, :, :0]
 
 
 class ESRIDataset(SegmentationDataset):
