@@ -22,10 +22,10 @@ def fetch_scheduler(optimizer, CFG, is_finetuning, n_train_batches):
     elif CFG.scheduler == "plateau":
         scheduler = lr_scheduler.ReduceLROnPlateau(
             optimizer,
-            mode="min",
-            factor=0.2,
-            patience=2,
-            threshold=0.0001,
+            mode="max",
+            factor=0.5,
+            patience=9,
+            threshold=1e-6,
             min_lr=CFG.min_lr,
         )
     elif CFG.scheduler == "exponential":
