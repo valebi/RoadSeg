@@ -87,7 +87,8 @@ def get_metrics(names: List[str]):
         "precision": AccumulatedPrecision(),
         "recall": AccumulatedRecall(),
         "iou": IOU(),
-        "jaccard" : IOU()
+        "jaccard" : IOU(),
+        "compf1" : CompF1()
     }
 
     metric_funcs = []
@@ -156,7 +157,34 @@ class AccumulatedF1:
         self.fp += fp
         self.tn += tn
         self.fn += fn
+        if self.tp + self.fn + self.fp == 0:
+            return torch.tensor(0.)
+        return 2 * self.tp / (2* self.tp + self.fn + self.fp)
+    
 
+class CompF1:
+
+    def __init__(self):
+        self.pooling = nn.AvgPool2d(kernel_size=(16,16), stride= 16)
+        self.threshold = 0.25
+        self.reset()
+
+    def reset(self):
+        self.tp = 0
+        self.fn = 0
+        self.fp = 0
+        self.tn = 0
+
+    def __call__(self,y_pred, y_true):
+        y_true_p = (self.pooling(y_true.to(torch.float)) > self.threshold).to(torch.long)
+        y_pred_p = (self.pooling(y_pred.to(torch.float)) > self.threshold).to(torch.long)
+        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(threshold=0.5, multidim_average='global', ignore_index=None, validate_args=True)(y_pred_p, y_true_p)
+        self.tp += tp
+        self.fp += fp
+        self.tn += tn
+        self.fn += fn
+        if self.tp + self.fn + self.fp == 0:
+            return torch.tensor(0.)
         return 2 * self.tp / (2* self.tp + self.fn + self.fp)
     
 class IOU:

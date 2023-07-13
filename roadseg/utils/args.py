@@ -191,7 +191,7 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         type=str,
         default=["iou"],
-        choices=["iou", "f1", "precision", "recall"],
+        choices=["iou", "f1", "precision", "recall", "compf1"],
         help="Metrics to watch during training. Metric to monitor during training is the first argument it will be used to report the best score and selection of the best model.",
     )
     parser.add_argument(
