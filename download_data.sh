@@ -17,7 +17,7 @@ cd ${DATA_DIR}
 kaggle datasets download valebi/maptiler-custom-tiles --unzip --path maptiler-custom-tiles
 kaggle competitions download ethz-cil-road-segmentation-2023 --path ethz-cil-road-segmentation-2023 --force
 cd ethz-cil-road-segmentation-2023
-unzip ethz-cil-road-segmentation-2023.zip -q
+unzip -q ethz-cil-road-segmentation-2023.zip
 cd -
 kaggle datasets download valebi/hofmann-osm --unzip --path roadseg-download-openstreetmap
 #kaggle kernels output valebi/roadseg-download-openstreetmap --path roadseg-download-openstreetmap
