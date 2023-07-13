@@ -246,7 +246,7 @@ def run_training(
         #     logging.info(f"Model Saved under {PATH}")
 
         if metric_to_monitor >= best_score:
-            logging.info(f"Monitoring Metric {metrics_to_watch[0]} Increased ({best_score:0.4f} ---> {metric_to_monitor:0.4f})")
+            logging.info(f"{model_name} Model Monitoring Metric {metrics_to_watch[0]} Increased ({best_score:0.4f} ---> {metric_to_monitor:0.4f})")
             best_score = metric_to_monitor
             best_model_wts = copy.deepcopy(model.state_dict())
             PATH = os.path.join(log_dir, "weights", f"best_epoch-{model_name}.bin")
