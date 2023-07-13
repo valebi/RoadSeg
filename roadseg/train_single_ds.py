@@ -26,8 +26,17 @@ from roadseg.utils.utils import log_images
 
 
 def train_one_epoch(
-    model, optimizer, scheduler, dataloader, device, epoch, criterion, use_wandb, model_name, metric_to_monitor):
-
+    model,
+    optimizer,
+    scheduler,
+    dataloader,
+    device,
+    epoch,
+    criterion,
+    use_wandb,
+    model_name,
+    metric_to_monitor,
+):
     n_accumulate = 1  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
     model.train()
     scaler = amp.GradScaler()
@@ -63,7 +72,8 @@ def train_one_epoch(
                 if not isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                     scheduler.step()
                 else:
-                    if step == 0 : scheduler.step(metric_to_monitor) ##Checks at every epoch
+                    if step == 0:
+                        scheduler.step(metric_to_monitor)  ##Checks at every epoch
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
@@ -94,17 +104,17 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metr
     dataset_size = 0
     running_loss = 0.0
 
-    val_scores = [None] *len(metrics_to_watch)
+    val_scores = [None] * len(metrics_to_watch)
 
     for metric in metrics_to_watch:
         if hasattr(metric, "reset"):
             metric.reset()
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
-    for step, (images, labels) in pbar:
+    for step, (images, masks) in pbar:
         images = images.to(device, dtype=torch.float)
-        labels = labels.to(device, dtype=torch.long)
-        labels, loss_mask = labels[:, 0], labels[:, 1]
+        masks = masks.to(device, dtype=torch.long)
+        labels, loss_mask = masks[:, 0], masks[:, 1]
 
         batch_size = images.size(0)
 
@@ -123,7 +133,7 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metr
         # val_prec = precision(y_pred.cpu(), labels.cpu())
         # val_rec = recall(y_pred.cpu(), labels.cpu())
 
-        for i,metric in enumerate(metrics_to_watch):
+        for i, metric in enumerate(metrics_to_watch):
             val_scores[i] = metric(y_pred, labels).item()
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
@@ -187,11 +197,17 @@ def run_training(
             epoch=epoch,
             use_wandb=use_wandb,
             model_name=model_name,
-            metric_to_monitor = metric_to_monitor
+            metric_to_monitor=metric_to_monitor,
         )
         metrics_to_watch_fn = get_metrics(metrics_to_watch)
         val_loss, val_scores, last_in, last_pred, last_msk = valid_one_epoch(
-            model, valid_loader, optimizer, criterion=criterion, device=device, epoch=epoch, metrics_to_watch = metrics_to_watch_fn
+            model,
+            valid_loader,
+            optimizer,
+            criterion=criterion,
+            device=device,
+            epoch=epoch,
+            metrics_to_watch=metrics_to_watch_fn,
         )
         metric_to_monitor = val_scores[0]
 
@@ -210,7 +226,6 @@ def run_training(
         history["Valid Loss"].append(val_loss)
         for metric, score in zip(metrics_to_watch, val_scores):
             history[f"Valid {metric}"].append(score)
-   
 
         if use_wandb:
             # @TODO: Reintroduce global step with offset or similar
@@ -232,9 +247,7 @@ def run_training(
         log_str = f"Valid Loss: {val_loss:0.4f}"
         for metric, score in zip(metrics_to_watch, val_scores):
             log_str += f" | Valid {metric}: {score:0.4f}"
-        logging.info(
-            f"Epoch {epoch}/{num_epochs} | {log_str}"
-        )
+        logging.info(f"Epoch {epoch}/{num_epochs} | {log_str}")
 
         # deep copy the model
         # if val_loss <= best_loss:
@@ -246,7 +259,9 @@ def run_training(
         #     logging.info(f"Model Saved under {PATH}")
 
         if metric_to_monitor >= best_score:
-            logging.info(f"{model_name} Model Monitoring Metric {metrics_to_watch[0]} Increased ({best_score:0.4f} ---> {metric_to_monitor:0.4f})")
+            logging.info(
+                f"{model_name} Model Monitoring Metric {metrics_to_watch[0]} Increased ({best_score:0.4f} ---> {metric_to_monitor:0.4f})"
+            )
             best_score = metric_to_monitor
             best_model_wts = copy.deepcopy(model.state_dict())
             PATH = os.path.join(log_dir, "weights", f"best_epoch-{model_name}.bin")
@@ -279,7 +294,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
     )
     if CFG.wandb:
         wandb.watch(model, criterion=get_loss(CFG.pretraining_loss), log_freq=100)
-    
+
     model, history_pre = run_training(
         model,
         model_name,
@@ -287,7 +302,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         scheduler,
         train_loader,
         val_loader,
-        criterion= get_loss(CFG.pretraining_loss),
+        criterion=get_loss(CFG.pretraining_loss),
         device=CFG.device,
         use_wandb=CFG.wandb,
         log_dir=CFG.log_dir,
@@ -340,9 +355,14 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         ax.legend(["train loss", "val loss"])
         fig.savefig(os.path.join(CFG.log_dir, f"finetuning_loss_fold_{fold}.png"))
         # plt.show()
-        scores_to_watch.append(np.max(history[f"Valid {CFG.metrics_to_watch[0]}"])) ##Needs to be added back later with monitoring
+        scores_to_watch.append(
+            np.max(history[f"Valid {CFG.metrics_to_watch[0]}"])
+        )  ##Needs to be added back later with monitoring
 
         gc.collect()
 
     logging.info(f"Best {CFG.metrics_to_watch[0]} scores after FT: {np.mean(scores_to_watch)}")
+    if CFG.wandb:
+        wandb.log({f"mean-{CFG.metrics_to_watch[0]}": np.mean(scores_to_watch)})
+
     return np.mean(scores_to_watch)

@@ -13,23 +13,25 @@
                 "cpu",
                 "--smp_backbone",
                 "efficientnet-b5",
+                "--smp_model",
+                "Unet",
                 "--train_batch_size",
                 "1",
                 "--val_batch_size",
                 "2",
                 "--datasets",
-                "roadtracing",
+                "hofmann",
                 "--max_per_dataset",
                 "16",
                 "--make_submission",
                 "--num_workers",
                 "2",
                 "--img_size",
-                "64",
+                "128",
                 "--n_finetuning_folds",
                 "2",
                 "--finetuning_epochs",
-                "1",
+                "10",
                 "--pretraining_epochs",
                 "1",
                 "--scheduler",
@@ -39,7 +41,7 @@
                 "--pretraining_loss",
                 "bce",
                 "--finetuning_loss",
-                "reg_f1",
+                "smp_dice",
                 "--metrics_to_watch",
                 "f1",
                 "compf1",
@@ -51,7 +53,6 @@
                 // "--model_download_drive_id",
                 // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
                 // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
-                
             ]
         }
     ]

@@ -2,7 +2,6 @@ import glob
 import logging
 import os
 
-import kaggle
 import numpy as np
 import PIL
 import torch
@@ -19,7 +18,14 @@ from roadseg.utils.mask_to_submission import (
 def generate_predictions(model, CFG, road_class=1, fold=""):
     img_files = [f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")]
     ##Added resize to match the training size
-    imgs = [np.array(Image.open(os.path.join(CFG.test_imgs_dir, f)).resize( (CFG.img_size, CFG.img_size), Image.Resampling.BILINEAR))[:, :, :3] for f in img_files]
+    imgs = [
+        np.array(
+            Image.open(os.path.join(CFG.test_imgs_dir, f)).resize(
+                (CFG.img_size, CFG.img_size), Image.Resampling.BILINEAR
+            )
+        )[:, :, :3]
+        for f in img_files
+    ]
 
     model.to(CFG.device)
     model.eval()
@@ -39,7 +45,9 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
     for i, prd in enumerate(pred):
-        img = PIL.Image.fromarray(prd).resize( (400,400), Image.Resampling.NEAREST) #Added resize to match the actual size
+        img = PIL.Image.fromarray(prd).resize(
+            (400, 400), Image.Resampling.NEAREST
+        )  # Added resize to match the actual size
         img.save(os.path.join(dirname, img_files[i]))
 
 
@@ -58,11 +66,14 @@ def make_submission(CFG):
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
     masks_to_submission(CFG.submission_file, "", *image_filenames)
     try:
+        import kaggle
+
         kaggle.api.competition_submit(
             file_name=CFG.submission_file,
             message=f"autosubmit: {CFG.experiment_name}",
             competition="ethz-cil-road-segmentation-2023",
         )
         logging.info("Submitted output to kaggle")
-    except:
+    except Exception as e:
         logging.info("Failed to submit to kaggle")
+        logging.info(str(e))
