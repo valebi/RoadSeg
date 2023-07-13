@@ -9,12 +9,6 @@ import roadseg.model.dummy_unet as dummy_unet
 
 
 def build_model(CFG, num_classes):
-    if CFG.smp_backbone == "dummy-unet":
-        return dummy_unet.build_model(CFG, num_classes)
-
-    if CFG.smp_model != "Unet":
-        raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
-
     init_weights = "imagenet" if CFG.smp_encoder_init_weights else None
 
     # @TODO: the UNet does not contract fully with depth=4. But if it does we need img_size % 32 == 0
@@ -28,15 +22,38 @@ def build_model(CFG, num_classes):
     else:
         raise ValueError("Decoder Depth can only be 4 or 5 for now.")
 
-    model = smp.Unet(
-        encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=num_classes,  # model output channels (number of classes in your dataset)
-        activation=None,
-        decoder_channels=decoder_channels,
-        encoder_depth=encoder_depth,
-    )
+    if CFG.smp_backbone == "dummy-unet":
+        dummy_unet.build_model(CFG, num_classes)
+    elif CFG.smp_model == "Unet":
+        model = smp.Unet(
+            encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=num_classes,  # model output channels (number of classes in your dataset)
+            activation=None,
+            decoder_channels=decoder_channels,
+            encoder_depth=encoder_depth,
+        )
+    elif CFG.smp_model == "UnetPlusPlus":
+        model = smp.UnetPlusPlus(
+            encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=num_classes,  # model output channels (number of classes in your dataset)
+            activation=None,
+            decoder_channels=decoder_channels,
+            encoder_depth=encoder_depth,
+        )
+    elif CFG.smp_model == "DeepLabV3":
+        model = smp.DeepLabV3(
+            encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=num_classes,  # model output channels (number of classes in your dataset)
+            activation=None,
+        )
+    else:
+        raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
 
     if CFG.initial_model:
         try:

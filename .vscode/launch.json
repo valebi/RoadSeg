@@ -13,6 +13,8 @@
                 "cpu",
                 "--smp_backbone",
                 "efficientnet-b5",
+                "--smp_model",
+                "Unet",
                 "--train_batch_size",
                 "1",
                 "--val_batch_size",
@@ -51,7 +53,6 @@
                 // "--model_download_drive_id",
                 // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
                 // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
-                
             ]
         }
     ]
