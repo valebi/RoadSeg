@@ -17,7 +17,7 @@ cd ${DATA_DIR}
 kaggle datasets download valebi/maptiler-custom-tiles --unzip --path maptiler-custom-tiles
 kaggle competitions download ethz-cil-road-segmentation-2023 --path ethz-cil-road-segmentation-2023 --force
 cd ethz-cil-road-segmentation-2023
-unzip ethz-cil-road-segmentation-2023.zip -q
+unzip -q ethz-cil-road-segmentation-2023.zip
 cd -
 kaggle datasets download valebi/hofmann-osm --unzip --path roadseg-download-openstreetmap
 kaggle datasets download valebi/google-roadseg --unzip --path google-roadseg
@@ -29,7 +29,7 @@ kaggle datasets download selinnbaris/processed-bing-dataset --unzip --path proce
 wget -O roadtracing.zip "https://polybox.ethz.ch/index.php/s/USLJotE9cgtZPMr/download?path=%2F&files=roadtracing.zip"
 #unzip roadtracing.zip -q
 #rm roadtracing.zip
-zip -FFv roadtracing.zip --out roadtracing_fixed.zip -q
+zip -FFv roadtracing.zip --out roadtracing_fixed.zip
 unzip -q roadtracing_fixed.zip
 
 wget -O epfl-roadseg.zip "https://polybox.ethz.ch/index.php/s/USLJotE9cgtZPMr/download?path=%2F&files=epfl.zip"
