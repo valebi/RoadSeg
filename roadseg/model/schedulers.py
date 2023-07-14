@@ -24,8 +24,8 @@ def fetch_scheduler(optimizer, CFG, is_finetuning, n_train_batches):
             optimizer,
             mode="max",
             factor=0.5,
-            patience=9,
-            threshold=1e-6,
+            patience=6,
+            threshold=5e-4,
             min_lr=CFG.min_lr,
         )
     elif CFG.scheduler == "exponential":
