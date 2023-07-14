@@ -17,7 +17,10 @@ def build_model(CFG, num_classes):
         decoder_channels = (64, 64, 32, 16)
         encoder_depth = 4
     elif CFG.decoder_depth == 5:
-        decoder_channels = (1024, 512, 64, 32, 32)
+        if CFG.slim:
+            decoder_channels = (256, 128, 64, 32, 32)
+        else:
+            decoder_channels = (1024, 512, 64, 32, 32)
         encoder_depth = 5
     else:
         raise ValueError("Decoder Depth can only be 4 or 5 for now.")
