@@ -66,6 +66,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
         )
 
         """
+        print(img.shape, lbl.shape)
         import matplotlib.pyplot as plt
 
         plt.subplot(1, 2, 1)
@@ -121,7 +122,7 @@ class HofmannDataset(SegmentationDataset):
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
             CFG.img_size,
             CFG.img_size,
-            scale=(0.3, 0.5),
+            scale=(0.4, 0.6),
             ratio=(0.75, 1.3333333333333333),
             interpolation=cv2.INTER_LINEAR,
         )
@@ -250,6 +251,32 @@ class EPFLDataset(SegmentationDataset):
         return (lbl > 150).astype(np.uint8) * 255
 
 
+class GoogleDataset(SegmentationDataset):
+    def __init__(self, CFG, transforms=None, max_samples=-1):
+        # @TODO load the useless ones too
+        super().__init__(transforms, max_samples)
+        self.img_paths = glob(CFG.data_dir + "/google-roadseg/sat/*/*.png")
+        self.lbl_paths = [f.replace("sat", "road") for f in self.img_paths]
+        self.crop = A.Compose(
+            [
+                A.augmentations.geometric.rotate.Rotate(limit=180, p=0.75, crop_border=True),
+                A.augmentations.geometric.transforms.Flip(p=0.5),
+                A.augmentations.crops.transforms.RandomResizedCrop(
+                    CFG.img_size,
+                    CFG.img_size,
+                    scale=(0.85, 1.15),
+                    ratio=(0.9, 1.1),
+                    interpolation=cv2.INTER_LINEAR,
+                ),
+            ],
+            p=1,
+        )
+        self._ensure_size()
+
+    def label_transform(self, lbl):
+        return lbl.astype(np.uint8)
+
+
 dataset_map = {
     "hofmann": HofmannDataset,
     "cil": CIL23Dataset,
@@ -259,4 +286,5 @@ dataset_map = {
     "bing-clean": CleanBingDataset,
     "roadtracing": RoadtracingDataset,
     "epfl": EPFLDataset,
+    "google": GoogleDataset,
 }
