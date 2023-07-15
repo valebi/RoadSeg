@@ -264,7 +264,7 @@ class GoogleDataset(SegmentationDataset):
                 A.augmentations.crops.transforms.RandomResizedCrop(
                     CFG.img_size,
                     CFG.img_size,
-                    scale=(0.85, 1.15),
+                    scale=(0.75, 1.25),
                     ratio=(0.9, 1.1),
                     interpolation=cv2.INTER_LINEAR,
                 ),
