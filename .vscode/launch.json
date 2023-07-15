@@ -18,7 +18,6 @@
                 "UnetPlusPlus",
                 "--decoder_depth",
                 "5",
-                "--debug",
                 "--train_batch_size",
                 "1",
                 "--val_batch_size",
