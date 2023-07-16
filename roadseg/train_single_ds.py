@@ -44,8 +44,8 @@ def train_one_epoch(
     dataset_size = 0
     running_loss = 0.0
 
-    pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
-    for step, (images, labels) in pbar:
+    # pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
+    for step, (images, labels) in enumerate(dataloader):
         images = images.to(device, dtype=torch.float)
         labels = labels.to(device, dtype=torch.long)
         labels, loss_mask = labels[:, 0], labels[:, 1]
@@ -109,8 +109,8 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metr
         if hasattr(metric, "reset"):
             metric.reset()
 
-    pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
-    for step, (images, masks) in pbar:
+    # pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
+    for step, (images, masks) in enumerate(dataloader):
         images = images.to(device, dtype=torch.float)
         masks = masks.to(device, dtype=torch.long)
         labels, loss_mask = masks[:, 0], masks[:, 1]
