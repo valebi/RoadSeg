@@ -51,7 +51,7 @@ def main(CFG: Namespace):
 
     gc.collect() ##Might be useful to garbage collect before we start training
     if not CFG.no_pretrain:
-        logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")
+        logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")  
         model = pretrain_model(CFG, model, train_loader, val_loader)
         gc.collect() ##Might be useful to garbage collect before we start fine tuning
 
