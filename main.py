@@ -37,7 +37,6 @@ def main(CFG: Namespace):
 
     model = build_model(CFG, num_classes=2)
 
-    
     if CFG.debug:
         imgs, msks = next(iter(train_loader))
         plot_batch(
@@ -57,8 +56,8 @@ def main(CFG: Namespace):
         gc.collect() ##Might be useful to garbage collect before we start fine tuning
 
     logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
-    avg_f1 = evaluate_finetuning(model, test_splits, CFG)
-    logging.info(f"Average F1 score: {avg_f1}.")
+    avg_score = evaluate_finetuning(model, test_splits, CFG)
+    logging.info(f"Average {CFG.metrics_to_watch[0]} scores of folds: {avg_score}.")
 
     make_ensemble(CFG)
 

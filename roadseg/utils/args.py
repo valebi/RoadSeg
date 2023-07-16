@@ -78,10 +78,21 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         default=["hofmann"],
         type=str,
-        choices=["cil", "hofmann", "maptiler", "esri", "bing"],
+        choices=[
+            "cil",
+            "hofmann",
+            "maptiler",
+            "esri",
+            "bing",
+            "bing-clean",
+            "roadtracing",
+            "epfl",
+            "google",
+        ],
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--slim", action="store_true", help="Reduces no. decoder channels.")
     parser.add_argument(
         "--max_per_dataset",
         type=int,
@@ -123,6 +134,7 @@ def parse_args() -> argparse.Namespace:
         "--smp_model",
         type=str,
         default="Unet",
+        choices=["Unet", "UnetPlusPlus", "DeepLabV3"],
         help="Model (/Framework) for pytorch-segmentation-models",
     )
     parser.add_argument(
@@ -135,7 +147,7 @@ def parse_args() -> argparse.Namespace:
         "--initial_model",
         type=str,
         default="",
-        help="One can load a pretrauned model weights to initialize the model. Must have the same architecture as the model specified by --smp_model.",
+        help="One can load a pretrained model weights to initialize the model. Must have the same architecture as the model specified by --smp_model.",
     )
     parser.add_argument(
         "--model_download_drive_id",
@@ -144,9 +156,16 @@ def parse_args() -> argparse.Namespace:
         help="One can download the initial_model weights from a public made google drive file.",
     )
     parser.add_argument(
+        "--decoder_depth",
+        type=int,
+        default=4,
+        help="Decoder depth for pytorch-segmentation-models. Can only be 4 or 5. Image size must be divisible by 2^decoder_depth.",
+    )
+    parser.add_argument(
         "--smp_backbone",
         type=str,
         default="timm-regnety_080",
+        # choices=["timm-regnety_080", "dummy-unet", "efficientnet-b5"],
         help="Backbone for pytorch-segmentation-models",
     )
     parser.add_argument(
@@ -178,6 +197,44 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=2e-3,
         help="Learning rate for pretraining.",
+    )
+    parser.add_argument(
+        "--metrics_to_watch",
+        nargs="+",
+        type=str,
+        default=["iou"],
+        choices=["iou", "f1", "precision", "recall", "compf1"],
+        help="Metrics to watch during training. Metric to monitor during training is the first argument it will be used to report the best score and selection of the best model.",
+    )
+    parser.add_argument(
+        "--pretraining_loss",
+        type=str,
+        default="bce",
+        choices=[
+            "bce",
+            "reg_f1",
+            "smp_dice",
+            "smp_jaccard",
+            "smp_lovasz",
+            "smp_tversky",
+            "smp_soft_ce",
+        ],
+        help="Loss to be used for pretraining.",
+    )
+    parser.add_argument(
+        "--finetuning_loss",
+        type=str,
+        default="reg_f1",
+        choices=[
+            "bce",
+            "reg_f1",
+            "smp_dice",
+            "smp_jaccard",
+            "smp_lovasz",
+            "smp_tversky",
+            "smp_soft_ce",
+        ],
+        help="Loss to be used for finetuning.",
     )
     parser.add_argument(
         "--finetuning_epochs",

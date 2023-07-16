@@ -47,6 +47,8 @@ def _plot_batch(imgs, masks, preds=None, src="", log_dir=None):
 
 
 def plot_batch(imgs, msks, pred=None, num_cols=5, src="", log_dir=None):
+    if len(msks.shape) == 4:
+        msks = msks[:, 0]
     num_cols = min(num_cols, len(imgs))
     num_rows = 2 if pred is None else 3
     fig = plt.figure(figsize=(20, 20 + (pred is None) * 7))

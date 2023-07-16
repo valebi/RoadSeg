@@ -109,6 +109,7 @@ def prepare_wandb(CFG):
     # @TODO: add id as cmd line argument, make this able to resume.
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     wandb.init(
+        entity="topoflop",
         project=CFG.wandb_project_name,
         resume="allow",
         name=CFG.experiment_name + "__" + timestamp,

@@ -6,42 +6,36 @@ def get_albumentations(CFG):
     transforms = A.Compose(
         [
             #         A.Resize(*CFG.img_size, interpolation=cv2.INTER_NEAREST),
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
+            A.HorizontalFlip(p=0.3),
+            A.VerticalFlip(p=0.3),
+            A.RandomRotate90(p=0.3),
             # A.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.05, rotate_limit=10, p=0.25),
             A.OneOf(
                 [
-                    # A.GridDistortion(num_steps=5, distort_limit=0.05, p=1.0),
-                    # A.OpticalDistortion(distort_limit=0.05, shift_limit=0.05, p=1.0),
-                    A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1.0),
+                    A.RandomShadow(
+                        num_shadows_lower=1, num_shadows_upper=3, shadow_dimension=3, p=1
+                    ),
+                    A.ElasticTransform(alpha=120, sigma=35, alpha_affine=3, p=1.0),
                 ],
-                p=0.15,
+                p=0.25,
             ),
             A.OneOf(
                 [
                     A.RandomBrightnessContrast(p=1.0),
-                    A.RandomGamma(p=1.0),
+                    A.RandomGamma(gamma_limit=(40, 450), p=1.0),
                     A.CLAHE(p=1.0),
                     A.ImageCompression(p=1.0),
                     A.HueSaturationValue(p=1.0),
+                    A.ColorJitter(p=1),
+                    A.RGBShift(p=1),
                 ],
-                p=0.35,
+                p=0.25,
             ),
             A.OneOf(
                 [
-                    A.RGBShift(),
-                    A.Blur(),
-                    A.GaussNoise(),
+                    A.Blur(p=1),
+                    A.GaussNoise(p=1),
                 ],
-                p=0.15,
-            ),
-            A.CoarseDropout(
-                max_holes=5,
-                max_height=CFG.img_size // 20,
-                max_width=CFG.img_size // 20,
-                min_holes=2,
-                fill_value=0,
-                mask_fill_value=0,
                 p=0.1,
             ),
         ],
