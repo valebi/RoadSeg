@@ -79,7 +79,7 @@ def setup_logging(cfg: argparse.Namespace):
     logging.basicConfig(
         format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
-        level=logging.WARNING,
+        level=logging.DEBUG if cfg.debug else logging.INFO,
         filename=log_file,
         force=True if not cfg.log_to_file else False,
     )
