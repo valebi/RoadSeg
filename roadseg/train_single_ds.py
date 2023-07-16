@@ -87,9 +87,9 @@ def train_one_epoch(
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
         current_lr = optimizer.param_groups[0]["lr"]
-        pbar.set_postfix(
-            train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
-        )
+        # pbar.set_postfix(
+        #    train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
+        # )
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -137,9 +137,9 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metr
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
         current_lr = optimizer.param_groups[0]["lr"]
-        pbar.set_postfix(
-            valid_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_memory=f"{mem:0.2f} GB"
-        )
+        # pbar.set_postfix(
+        #    valid_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_memory=f"{mem:0.2f} GB"
+        # )
 
     # val_scores = np.mean(val_scores, axis=0)
     # val_scores = [
