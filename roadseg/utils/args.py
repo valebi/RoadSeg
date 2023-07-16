@@ -213,6 +213,7 @@ def parse_args() -> argparse.Namespace:
         choices=[
             "bce",
             "reg_f1",
+            "patch_f1",
             "smp_dice",
             "smp_jaccard",
             "smp_lovasz",
@@ -228,6 +229,7 @@ def parse_args() -> argparse.Namespace:
         choices=[
             "bce",
             "reg_f1",
+            "patch_f1",
             "smp_dice",
             "smp_jaccard",
             "smp_lovasz",
