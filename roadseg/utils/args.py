@@ -92,6 +92,7 @@ def parse_args() -> argparse.Namespace:
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--slim", action="store_true", help="Reduces no. decoder channels.")
     parser.add_argument(
         "--max_per_dataset",
         type=int,

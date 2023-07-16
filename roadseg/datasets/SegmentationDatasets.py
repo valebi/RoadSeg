@@ -105,7 +105,7 @@ class MaptilerDataset(SegmentationDataset):
             CFG.img_size,
             CFG.img_size,
             scale=(0.85, 1.15),
-            ratio=(0.75, 1.3333333333333333),
+            ratio=(0.9, 1.1),
             interpolation=cv2.INTER_LINEAR,
         )
         self._ensure_size()
@@ -123,7 +123,7 @@ class HofmannDataset(SegmentationDataset):
             CFG.img_size,
             CFG.img_size,
             scale=(0.4, 0.6),
-            ratio=(0.75, 1.3333333333333333),
+            ratio=(0.9, 1.1),
             interpolation=cv2.INTER_LINEAR,
         )
         self._ensure_size()
@@ -169,7 +169,7 @@ class CIL23Dataset(SegmentationDataset):
                 CFG.img_size,
                 CFG.img_size,
                 scale=(0.85, 1.15),
-                ratio=(0.75, 1.3333333333333333),
+                ratio=(0.9, 1.1),
                 interpolation=cv2.INTER_LINEAR,
             )
         self._ensure_size()
@@ -210,7 +210,7 @@ class CleanBingDataset(SegmentationDataset):
             CFG.img_size,
             CFG.img_size,
             scale=(0.85, 1.15),
-            ratio=(0.75, 1.3333333333333333),
+            ratio=(0.9, 1.1),
             interpolation=cv2.INTER_LINEAR,
         )
         self._ensure_size()
@@ -226,7 +226,7 @@ class RoadtracingDataset(SegmentationDataset):
             CFG.img_size,
             CFG.img_size,
             scale=(0.85, 1.15),
-            ratio=(0.75, 1.3333333333333333),
+            ratio=(0.9, 1.1),
             interpolation=cv2.INTER_LINEAR,
         )
         self._ensure_size()
@@ -242,7 +242,7 @@ class EPFLDataset(SegmentationDataset):
             CFG.img_size,
             CFG.img_size,
             scale=(0.85, 1.15),
-            ratio=(0.75, 1.3333333333333333),
+            ratio=(0.9, 1.1),
             interpolation=cv2.INTER_LINEAR,
         )
         self._ensure_size()
@@ -264,7 +264,7 @@ class GoogleDataset(SegmentationDataset):
                 A.augmentations.crops.transforms.RandomResizedCrop(
                     CFG.img_size,
                     CFG.img_size,
-                    scale=(0.85, 1.15),
+                    scale=(0.75, 1.25),
                     ratio=(0.9, 1.1),
                     interpolation=cv2.INTER_LINEAR,
                 ),
