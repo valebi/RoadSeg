@@ -9,7 +9,9 @@ from roadseg.datasets.SegmentationDatasets import CIL23Dataset, dataset_map
 
 def split(dataset, train=0.8):
     n_train = int(train * len(dataset))
-    return torch.utils.data.random_split(dataset, [n_train, len(dataset) - n_train])
+    return torch.utils.data.random_split(
+        dataset, [n_train, len(dataset) - n_train], generator=torch.Generator().manual_seed(42)
+    )
 
 
 def make_train_val(datasets, train=0.8):

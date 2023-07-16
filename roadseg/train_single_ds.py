@@ -72,8 +72,7 @@ def train_one_epoch(
                 if not isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                     scheduler.step()
                 else:
-                    if step == 0:
-                        scheduler.step(metric_to_monitor)  ##Checks at every epoch
+                    scheduler.step(metric_to_monitor)
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
