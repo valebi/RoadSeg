@@ -44,6 +44,7 @@ def _plot_batch(imgs, masks, preds=None, src="", log_dir=None):
             fig.savefig(os.path.join(log_dir, f"sample_pred_{src}.png"))
 
     # plt.show()
+    plt.close("all")
 
 
 def plot_batch(imgs, msks, pred=None, num_cols=5, src="", log_dir=None):
