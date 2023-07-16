@@ -18,9 +18,6 @@ from roadseg.utils.mask_to_submission import (
 def generate_predictions(model, CFG, road_class=1, fold=""):
     img_files = [f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")]
     ##Added resize to match the training size
-<<<<<<< HEAD
-    imgs = [np.array( Image.open(os.path.join(CFG.test_imgs_dir, f)).resize((CFG.img_size, CFG.img_size), Image.Resampling.BILINEAR) )[:, :, :3] for f in img_files]
-=======
     imgs = [
         np.array(
             Image.open(os.path.join(CFG.test_imgs_dir, f)).resize(
@@ -29,7 +26,6 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
         )[:, :, :3]
         for f in img_files
     ]
->>>>>>> bc40fcef42012a8688f3829ff82a7ba2ea56e2f4
 
     model.to(CFG.device)
     model.eval()
@@ -49,13 +45,9 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
     for i, prd in enumerate(pred):
-<<<<<<< HEAD
-        img = PIL.Image.fromarray(prd).resize( (400,400), Image.Resampling.NEAREST) #Added resize to match the actual size
-=======
         img = PIL.Image.fromarray(prd).resize(
             (400, 400), Image.Resampling.NEAREST
         )  # Added resize to match the actual size
->>>>>>> bc40fcef42012a8688f3829ff82a7ba2ea56e2f4
         img.save(os.path.join(dirname, img_files[i]))
 
 
