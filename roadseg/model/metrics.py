@@ -71,7 +71,7 @@ def patch_f1_loss(y_pred, y_true):
     # return 0.5*BCELoss(y_pred, y_true) #+ 0.5*DiceLoss(y_pred, y_true)
     return 0.2 * get_loss("smp_soft_ce")(y_pred, y_true) + 0.8 * f1_loss(
         torch.nn.functional.avg_pool2d(y_pred, kernel_size=16, stride=16),
-        torch.nn.functional.avg_pool2d(y_true, kernel_size=16, stride=16),
+        torch.nn.functional.avg_pool2d(y_true.to(torch.float32), kernel_size=16, stride=16),
     )  # + 0.5*DiceLoss(y_pred, y_true)
 
 

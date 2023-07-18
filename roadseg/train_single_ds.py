@@ -44,8 +44,8 @@ def train_one_epoch(
     dataset_size = 0
     running_loss = 0.0
 
-    # pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
-    for step, (images, labels) in enumerate(dataloader):
+    pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
+    for step, (images, labels) in pbar:
         images = images.to(device, dtype=torch.float)
         labels = labels.to(device, dtype=torch.long)
         labels, loss_mask = labels[:, 0], labels[:, 1]
@@ -72,7 +72,8 @@ def train_one_epoch(
                 if not isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                     scheduler.step()
                 else:
-                    scheduler.step(metric_to_monitor)
+                    if step == 0:
+                        scheduler.step(metric_to_monitor)  ##Checks at every epoch
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
@@ -87,9 +88,9 @@ def train_one_epoch(
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
         current_lr = optimizer.param_groups[0]["lr"]
-        # pbar.set_postfix(
-        #    train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
-        # )
+        pbar.set_postfix(
+            train_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_mem=f"{mem:0.2f} GB"
+        )
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -109,8 +110,8 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metr
         if hasattr(metric, "reset"):
             metric.reset()
 
-    # pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
-    for step, (images, masks) in enumerate(dataloader):
+    pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
+    for step, (images, masks) in pbar:
         images = images.to(device, dtype=torch.float)
         masks = masks.to(device, dtype=torch.long)
         labels, loss_mask = masks[:, 0], masks[:, 1]
@@ -137,9 +138,9 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metr
 
         mem = torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
         current_lr = optimizer.param_groups[0]["lr"]
-        # pbar.set_postfix(
-        #    valid_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_memory=f"{mem:0.2f} GB"
-        # )
+        pbar.set_postfix(
+            valid_loss=f"{epoch_loss:0.4f}", lr=f"{current_lr:0.5f}", gpu_memory=f"{mem:0.2f} GB"
+        )
 
     # val_scores = np.mean(val_scores, axis=0)
     # val_scores = [
@@ -287,7 +288,9 @@ def run_training(
 
 def pretrain_model(CFG, model, train_loader, val_loader):
     model_name = f"pretrain"
-    optimizer = optim.Adam(model.parameters(), lr=CFG.pretraining_lr, weight_decay=CFG.weight_decay)
+    optimizer = optim.NAdam(
+        model.parameters(), lr=CFG.pretraining_lr, weight_decay=CFG.weight_decay
+    )
     scheduler = fetch_scheduler(
         optimizer, CFG, is_finetuning=False, n_train_batches=len(train_loader)
     )
@@ -324,7 +327,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
     for fold, (train_loader, val_loader) in enumerate(comp_splits):
         model = copy.deepcopy(pretrained_model)
         model_name = f"finetune-fold-{fold}"
-        optimizer = optim.Adam(
+        optimizer = optim.NAdam(
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
         )
         scheduler = fetch_scheduler(
