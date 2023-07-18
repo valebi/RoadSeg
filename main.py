@@ -76,6 +76,6 @@ if __name__ == "__main__":
     try:
         main(args)
     except (Exception, KeyboardInterrupt) as e:
-        print("Exception occurred, saving a checkpoint...")
+        print(f"Exception {e} occurred, saving a checkpoint...")
         finalize(args)
         raise e
