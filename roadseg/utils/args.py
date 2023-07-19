@@ -80,6 +80,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         choices=[
             "cil",
+            "onepiece-cil",
             "hofmann",
             "maptiler",
             "esri",
