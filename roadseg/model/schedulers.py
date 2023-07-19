@@ -17,7 +17,7 @@ def fetch_scheduler(optimizer, CFG, is_finetuning, n_train_batches):
             T_0=virt_train_batches,  # limit the virtual dataset size to 10k samples
             eta_min=CFG.min_lr,
             T_mult=2,
-            verbose=True,
+            verbose=False,
         )
     elif CFG.scheduler == "plateau":
         scheduler = lr_scheduler.ReduceLROnPlateau(
