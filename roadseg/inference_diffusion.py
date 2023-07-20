@@ -22,7 +22,7 @@ def pred_from_dataloader(model, dl, device, num_ensemble=2):
     for imgs, masks in dl:
         # ensembled prediction
         pred = np.mean(
-            [model.sample(imgs.to(device)).cpu().detach() for i in range(num_ensemble)],
+            [model.sample(imgs.to(device)).cpu().detach().numpy() for i in range(num_ensemble)],
             axis=0,
         )
         preds.append(pred)
