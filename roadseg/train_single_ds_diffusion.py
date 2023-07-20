@@ -57,7 +57,7 @@ def train_one_epoch(
 
         with amp.autocast(enabled=True):
             # y_pred = model(images)
-            loss = diffusion(labels.float(), images) * images.size(0)
+            loss = diffusion(labels.float(), images)
             # y_pred = y_pred * loss_mask[:, None]
             # loss = criterion(y_pred[:, 1], labels.float())
             loss = loss / n_accumulate

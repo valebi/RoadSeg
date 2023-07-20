@@ -8,7 +8,7 @@
             "justMyCode": false,
             "args": [
                 // "--log_to_file",
-                "--use_wandb",
+                "--wandb",
                 "--experiment_tag",
                 "local_debug",
                 "--device",
