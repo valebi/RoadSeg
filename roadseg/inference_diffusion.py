@@ -51,7 +51,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     model.to(CFG.device)
     model.eval()
     preds = []
-    for img in dl:
+    for d in dl:
         # ensembled prediction
         pred = np.mean(
             [model.sample(d.to(CFG.device)).cpu().detach().numpy() for i in range(5)], axis=0
