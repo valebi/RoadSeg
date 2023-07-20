@@ -8,7 +8,7 @@ logs/
 #data/
 output/
 submission.csv 
-*.csv
+submission*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
