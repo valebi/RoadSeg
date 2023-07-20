@@ -10,3 +10,5 @@ albumentations
 absl-py
 imageio
 kaggle
+beartype
+einops
