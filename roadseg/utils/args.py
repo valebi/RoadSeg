@@ -262,6 +262,12 @@ def parse_args() -> argparse.Namespace:
         help="Learning rate scheduler.",
     )
     parser.add_argument(
+        "--scheduler_warmup_iters",
+        type=int,
+        default="1",
+        help="Learning rate scheduler warmup period. Uses a linear warmup fomr 0.01 lr to 1.0 lr.",
+    )
+    parser.add_argument(
         "--min_lr",
         type=float,
         default=1e-6,

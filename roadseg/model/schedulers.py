@@ -31,6 +31,10 @@ def fetch_scheduler(optimizer, CFG, is_finetuning, n_train_batches):
     elif CFG.scheduler == "exponential":
         scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
     elif CFG.scheduler == None:
-        return None
+        scheduler = None
+
+    if  CFG.scheduler is not None and CFG.scheduler_warmup_iters > 0:
+        wmup_scheduler = lr_scheduler.LinearLR(optimizer,start_factor= 0.01, end_factor=1.0, total_iters= CFG.scheduler_warmup_iters, verbose=True)
+        scheduler = lr_scheduler.SequentialLR(optimizer, [wmup_scheduler, scheduler] ,milestones=[CFG.scheduler_warmup_iters], verbose=True)    
 
     return scheduler
