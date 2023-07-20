@@ -21,12 +21,12 @@ def pred_from_dataloader(model, dl, device, num_ensemble=2):
     preds = []
     for imgs, masks in dl:
         # ensembled prediction
-        pred = torch.mean(
+        pred = np.mean(
             [model.sample(imgs.to(device)).cpu().detach() for i in range(num_ensemble)],
-            dim=0,
+            axis=0,
         )
         preds.append(pred)
-    return torch.concat(preds, dim=0)
+    return torch.tensor(np.concatenate(preds, axis=0))
 
 
 def generate_predictions(model, CFG, road_class=1, fold=""):
