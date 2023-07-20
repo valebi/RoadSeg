@@ -36,6 +36,7 @@ def train_one_epoch(
     use_wandb,
     model_name,
     metric_to_monitor,
+    file = None
 ):
     n_accumulate = 1  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
     model.train()
@@ -43,8 +44,8 @@ def train_one_epoch(
 
     dataset_size = 0
     running_loss = 0.0
-
-    pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Train epoch {epoch}")
+    
+    pbar = tqdm(enumerate(dataloader), total=len(dataloader), file = file, desc=f"Train epoch {epoch}")
     for step, (images, labels) in pbar:
         images = images.to(device, dtype=torch.float)
         labels = labels.to(device, dtype=torch.long)
@@ -98,7 +99,7 @@ def train_one_epoch(
 
 
 @torch.no_grad()
-def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metrics_to_watch):
+def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metrics_to_watch, file = None):
     model.eval()
 
     dataset_size = 0
@@ -110,7 +111,7 @@ def valid_one_epoch(model, dataloader, optimizer, device, epoch, criterion, metr
         if hasattr(metric, "reset"):
             metric.reset()
 
-    pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Valid epoch {epoch}")
+    pbar = tqdm(enumerate(dataloader), total=len(dataloader),file = file, desc=f"Valid epoch {epoch}")
     for step, (images, masks) in pbar:
         images = images.to(device, dtype=torch.float)
         masks = masks.to(device, dtype=torch.long)
@@ -168,6 +169,7 @@ def run_training(
     log_dir,
     plot_freq=3,
     metrics_to_watch=None,
+    progress_log_file = None
 ):
     # To automatically log gradients
 
@@ -198,6 +200,7 @@ def run_training(
             use_wandb=use_wandb,
             model_name=model_name,
             metric_to_monitor=metric_to_monitor,
+            file = progress_log_file
         )
         metrics_to_watch_fn = get_metrics(metrics_to_watch)
         val_loss, val_scores, last_in, last_pred, last_msk = valid_one_epoch(
@@ -208,6 +211,7 @@ def run_training(
             device=device,
             epoch=epoch,
             metrics_to_watch=metrics_to_watch_fn,
+            file = progress_log_file
         )
         metric_to_monitor = val_scores[0]
 
@@ -295,7 +299,9 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         optimizer, CFG, is_finetuning=False, n_train_batches=len(train_loader)
     )
     if CFG.wandb:
-        wandb.watch(model, criterion=get_loss(CFG.pretraining_loss), log_freq=100)
+        wandb.watch(model, criterion=get_loss(CFG.pretraining_loss), log_freq=7000)
+
+    progress_log_file = open(os.path.join(CFG.log_dir, f"{model_name}_progress.log"), "a") if CFG.log_to_file else None
 
     model, history_pre = run_training(
         model,
@@ -310,7 +316,11 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         log_dir=CFG.log_dir,
         num_epochs=CFG.pretraining_epochs,
         metrics_to_watch=CFG.metrics_to_watch,
+        progress_log_file = progress_log_file
     )
+
+    if hasattr(progress_log_file, 'close') and callable(progress_log_file.close):
+        progress_log_file.close()
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 4))
     ax.set_title("Pretraining: ")
@@ -333,6 +343,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         scheduler = fetch_scheduler(
             optimizer, CFG=CFG, is_finetuning=True, n_train_batches=len(train_loader)
         )
+        progress_log_file = open(os.path.join(CFG.log_dir, f"{model_name}_progress.log"), "a") if CFG.log_to_file else None
         model, history = run_training(
             model,
             model_name,
@@ -346,7 +357,10 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             log_dir=CFG.log_dir,
             num_epochs=CFG.finetuning_epochs,
             metrics_to_watch=CFG.metrics_to_watch,
+            progress_log_file=progress_log_file
         )
+        if hasattr(progress_log_file, 'close') and callable(progress_log_file.close):
+            progress_log_file.close()
 
         generate_predictions(model, CFG, fold=fold)
 

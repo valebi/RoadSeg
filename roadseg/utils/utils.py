@@ -87,6 +87,7 @@ def setup_logging(cfg: argparse.Namespace):
     # Suppress logging from other modules
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("PIL").setLevel(logging.WARNING)
+    
 
     prepare_wandb(cfg)
 
