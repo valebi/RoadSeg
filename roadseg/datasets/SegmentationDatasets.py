@@ -349,7 +349,6 @@ class OnepieceCILDataset(SegmentationDataset):
                 ],
                 p=1,
             )
-
         """
         import matplotlib.pyplot as plt
         plt.figure(figsize=(50,50))
@@ -398,6 +397,7 @@ class OnepieceCILDataset(SegmentationDataset):
             torch.tensor(lbl), 0, 2
         )
 
+        """
         print(img.shape, lbl.shape)
         import matplotlib.pyplot as plt
 
@@ -408,6 +408,7 @@ class OnepieceCILDataset(SegmentationDataset):
         plt.subplot(1, 3, 3)
         plt.imshow(lbl.permute(1, 2, 0)[:, :, 1])
         plt.show()
+        """
 
         return (
             img / 255,
