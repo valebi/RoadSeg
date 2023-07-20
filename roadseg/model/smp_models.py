@@ -33,7 +33,7 @@ def build_model(CFG, num_classes):
             dim=64,
             image_size=CFG.img_size,
             dim_mults=(1, 2, 4, 8),
-            mask_channels=1,
+            mask_channels=2,
             input_img_channels=3,
             self_condition=False,
         )
