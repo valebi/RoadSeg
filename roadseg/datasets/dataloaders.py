@@ -4,7 +4,7 @@ from sklearn.model_selection import KFold
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
-from roadseg.datasets.SegmentationDatasets import CIL23Dataset, dataset_map
+from roadseg.datasets.SegmentationDatasets import CIL23Dataset, OnepieceCILDataset, dataset_map
 
 
 def split(dataset, train=0.8):
@@ -47,8 +47,12 @@ def get_dataloaders(CFG, transforms):
     )
 
     # k-fold split of finetuning datasets
-    comp_dataset = CIL23Dataset(CFG, transforms=transforms)
-    comp_dataset_notransforms = CIL23Dataset(CFG, transforms=None)
+    if CFG.onepiece:
+        comp_dataset = OnepieceCILDataset(CFG, transforms=transforms)
+        comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=None)
+    else:
+        comp_dataset = CIL23Dataset(CFG, transforms=transforms)
+        comp_dataset_notransforms = CIL23Dataset(CFG, transforms=None)
 
     comp_splits = []
     kf = KFold(
