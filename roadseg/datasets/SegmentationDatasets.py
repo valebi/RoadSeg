@@ -317,12 +317,12 @@ class OnepieceCILDataset(SegmentationDataset):
         ]
 
         self.lookup1 = np.loadtxt(
-            os.path.join(CFG.data_dir, "ethz-cil-road-segmentation-2023", "img1.csv"),
+            "roadseg/utils/img1.csv",
             delimiter=",",
             dtype=np.int32,
         )
         self.lookup2 = np.loadtxt(
-            os.path.join(CFG.data_dir, "ethz-cil-road-segmentation-2023", "img2.csv"),
+            "roadseg/utils/img2.csv",
             delimiter=",",
             dtype=np.int32,
         )
