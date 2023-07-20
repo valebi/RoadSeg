@@ -8,9 +8,9 @@ from argparse import Namespace
 from torchsummary import summary
 
 from roadseg.datasets.dataloaders import get_dataloaders
-from roadseg.inference import make_ensemble, make_submission
+from roadseg.inference_diffusion import make_ensemble, make_submission
 from roadseg.model.smp_models import build_model
-from roadseg.train_single_ds import evaluate_finetuning, pretrain_model
+from roadseg.train_single_ds_diffusion import evaluate_finetuning, pretrain_model
 from roadseg.utils.augmentations import get_albumentations
 from roadseg.utils.plots import plot_batch
 from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
@@ -23,10 +23,10 @@ def main(CFG: Namespace):
     transforms = get_albumentations(CFG)
     train_loader, val_loader, test_splits = get_dataloaders(CFG, transforms)
 
-    #TODO: We may add the link as an arugment too but https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link cannot be parsed correctly as input
+    # TODO: We may add the link as an arugment too but https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link cannot be parsed correctly as input
     if CFG.model_download_drive_id:
         print(CFG.model_download_drive_id)
-        file_id = CFG.model_download_drive_id #.split("/")[-2]
+        file_id = CFG.model_download_drive_id  # .split("/")[-2]
         print(file_id)
         destination = CFG.initial_model
         pathlib.Path(destination).parent.mkdir(parents=True, exist_ok=True)
@@ -40,7 +40,7 @@ def main(CFG: Namespace):
     if CFG.debug:
         imgs, msks = next(iter(train_loader))
         plot_batch(
-        imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="train", log_dir=CFG.log_dir
+            imgs[:16].detach().numpy(), msks[:16].detach().numpy(), src="train", log_dir=CFG.log_dir
         )
         imgs, msks = next(iter(test_splits[0][1]))
         plot_batch(
@@ -49,11 +49,11 @@ def main(CFG: Namespace):
         del imgs, msks
         summary(model, input_size=imgs.shape[1:], device=CFG.device)
 
-    gc.collect() ##Might be useful to garbage collect before we start training
+    gc.collect()  ##Might be useful to garbage collect before we start training
     if not CFG.no_pretrain:
-        logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")  
+        logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")
         model = pretrain_model(CFG, model, train_loader, val_loader)
-        gc.collect() ##Might be useful to garbage collect before we start fine tuning
+        gc.collect()  ##Might be useful to garbage collect before we start fine tuning
 
     logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
     avg_score = evaluate_finetuning(model, test_splits, CFG)

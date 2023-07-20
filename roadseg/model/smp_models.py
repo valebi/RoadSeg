@@ -6,6 +6,7 @@ import torch
 from torch import nn
 
 import roadseg.model.dummy_unet as dummy_unet
+from roadseg.model.lucidrains_medsegdiff import MedSegDiff, Unet
 
 
 def build_model(CFG, num_classes):
@@ -26,7 +27,21 @@ def build_model(CFG, num_classes):
         raise ValueError("Decoder Depth can only be 4 or 5 for now.")
 
     if CFG.smp_backbone == "dummy-unet":
-        dummy_unet.build_model(CFG, num_classes)
+        return dummy_unet.build_model(CFG, num_classes)
+    elif CFG.smp_model == "medsegdiff":
+        model = Unet(
+            dim=64,
+            image_size=CFG.img_size,
+            dim_mults=(1, 2, 4, 8),
+            mask_channels=1,
+            input_img_channels=3,
+            self_condition=False,
+        )
+        if False:
+            from torchsummary import summary
+        # summary(model, input_size=(CFG.img_size, CFG.img_size, 3), device=CFG.device)
+        diffusion = MedSegDiff(model, timesteps=10).to(CFG.device)  # 1000
+        return diffusion
     elif CFG.smp_model == "Unet":
         model = smp.Unet(
             encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7

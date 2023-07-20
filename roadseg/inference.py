@@ -42,7 +42,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
 
     pred = torch.concat([model(d) for d, in dl], axis=0)
     pred = torch.sigmoid(pred).cpu().numpy()
-    pred = (pred[:, road_class, :, :] > 0.5) * 255
+    pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
     for i, prd in enumerate(pred):
         img = PIL.Image.fromarray(prd).resize(
