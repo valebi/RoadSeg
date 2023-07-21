@@ -193,7 +193,7 @@ def run_training(
     # best_epoch     = -1
     history = defaultdict(list)
 
-    best_score = -np.inf
+    best_score = np.inf
     metric_to_monitor = -np.inf
     for epoch in range(1, num_epochs + 1):
         gc.collect()
