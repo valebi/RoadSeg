@@ -22,7 +22,10 @@ def pred_from_dataloader(model, dl, device, num_ensemble=2):
     for imgs, masks in dl:
         # ensembled prediction
         pred = np.mean(
-            [model.sample(imgs.to(device)).cpu().detach().numpy() for i in range(num_ensemble)],
+            [
+                model.sample(imgs.to(device)).cpu().detach().numpy()[:, 0]
+                for i in range(num_ensemble)
+            ],
             axis=0,
         )
         preds.append(pred)
@@ -51,11 +54,9 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     model.to(CFG.device)
     model.eval()
     preds = []
-    for d in dl:
+    for (d,) in dl:
         # ensembled prediction
-        pred = np.mean(
-            [model.sample(d.to(CFG.device)).cpu().detach().numpy() for i in range(5)], axis=0
-        )
+        pred = np.mean([model.sample(d).cpu().detach().numpy() for i in range(5)], axis=0)
         preds.append(pred)
     pred = np.concatenate(preds, axis=0)
 
