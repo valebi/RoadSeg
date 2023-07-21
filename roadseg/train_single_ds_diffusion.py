@@ -292,8 +292,8 @@ def run_training(
     labels = torch.cat([labels[:, 0] for _, labels in valid_loader], axis=0)
     val_scores = []
 
-    # for i, metric in enumerate(get_metrics(metrics_to_watch)):
-    #    val_scores.append(metric(y_pred, labels).item())
+    for i, metric in enumerate(get_metrics(metrics_to_watch)):
+        val_scores.append(metric(y_pred, labels).item())
 
     logging.info("Val scores:" + str(val_scores))
 
