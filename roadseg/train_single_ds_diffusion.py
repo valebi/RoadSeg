@@ -282,7 +282,7 @@ def run_training(
             time_elapsed // 3600, (time_elapsed % 3600) // 60, (time_elapsed % 3600) % 60
         )
     )
-    logging.info("Best Monitoring Metric Score: {:.4f}".format(best_score))
+    logging.info("Lowest Loss: {:.4f}".format(best_score))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
@@ -405,9 +405,9 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         ax.legend(["train loss", "val loss"])
         fig.savefig(os.path.join(CFG.log_dir, f"finetuning_loss_fold_{fold}.png"))
         # plt.show()
-        # scores_to_watch.append(
-        #    np.nanmax(history[f"Valid {CFG.metrics_to_watch[0]}"])
-        # )  ##Needs to be added back later with monitoring
+        scores_to_watch.append(
+            np.nanmax(history[f"Valid {CFG.metrics_to_watch[0]}"])
+        )  ##Needs to be added back later with monitoring
 
         gc.collect()
 
