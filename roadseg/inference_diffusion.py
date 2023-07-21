@@ -56,11 +56,11 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     preds = []
     for (d,) in dl:
         # ensembled prediction
-        pred = np.mean([model.sample(d).cpu().detach().numpy() for i in range(5)], axis=0)
+        pred = np.mean([model.sample(d).cpu().detach().numpy()[:, 0] for i in range(5)], axis=0)
         preds.append(pred)
     pred = np.concatenate(preds, axis=0)
 
-    pred = pred[:, road_class, :, :] * 255
+    pred = pred * 255
     pred = pred.astype(np.uint8)
 
     dirname = os.path.join(CFG.out_dir, f"fold-{fold}")
