@@ -404,7 +404,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         fig.savefig(os.path.join(CFG.log_dir, f"finetuning_loss_fold_{fold}.png"))
         # plt.show()
         scores_to_watch.append(
-            np.max(history[f"Valid {CFG.metrics_to_watch[0]}"])
+            np.nanmax(history[f"Valid {CFG.metrics_to_watch[0]}"])
         )  ##Needs to be added back later with monitoring
 
         gc.collect()
