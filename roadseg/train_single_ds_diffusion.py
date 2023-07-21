@@ -38,13 +38,14 @@ def train_one_epoch(
     metric_to_monitor,
     file=None,
 ):
-    n_accumulate = 1  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
+    n_accumulate = 2  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
     # model.train()
     scaler = amp.GradScaler()
 
     dataset_size = 0
     running_loss = 0.0
 
+    diffusion = diffusion.to(device)
     pbar = tqdm(
         enumerate(dataloader), total=len(dataloader), file=file, desc=f"Train epoch {epoch}"
     )
@@ -231,8 +232,8 @@ def run_training(
                 src=f"val-epoch-{epoch}",
                 log_dir=log_dir,
             )
-        if use_wandb:
-            log_images(last_in.cpu().numpy(), last_msk.cpu().numpy(), last_pred.cpu().numpy())
+        # if use_wandb:
+        #    log_images(last_in.cpu().numpy(), last_msk.cpu().numpy(), last_pred.cpu().numpy())
 
         history["Train Loss"].append(train_loss)
         history["Valid Loss"].append(val_loss)
@@ -288,7 +289,7 @@ def run_training(
 
     y_pred = pred_from_dataloader(model, valid_loader, device=device, num_ensemble=2)
     imgs = torch.cat([img for img, _ in valid_loader], axis=0)
-    labels = torch.cat([labels for _, labels in valid_loader], axis=0)
+    labels = torch.cat([labels[:, 0] for _, labels in valid_loader], axis=0)
     val_scores = []
 
     # for i, metric in enumerate(get_metrics(metrics_to_watch)):
@@ -308,7 +309,7 @@ def run_training(
             global_step = epoch * len(train_loader)
             wandb.log(log_dict, step=global_step)
 
-        log_images(imgs[-32:].numpy(), labels.numpy()[-32:], y_pred[:-32])
+        log_images(imgs.numpy(), labels.numpy(), y_pred.numpy())
 
     return model, history
 
