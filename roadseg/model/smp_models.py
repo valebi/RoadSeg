@@ -40,7 +40,7 @@ def build_model(CFG, num_classes):
         if False:
             from torchsummary import summary
         # summary(model, input_size=(CFG.img_size, CFG.img_size, 3), device=CFG.device)
-        diffusion = MedSegDiff(model, timesteps=10).to(CFG.device)  # 1000
+        diffusion = MedSegDiff(model, timesteps=100).to(CFG.device)  # 1000
         return diffusion
     elif CFG.smp_model == "Unet":
         model = smp.Unet(
