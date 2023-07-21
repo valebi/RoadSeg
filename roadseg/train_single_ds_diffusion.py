@@ -262,7 +262,7 @@ def run_training(
         #     PATH = os.path.join(log_dir, "weights", f"best_epoch-{model_name}.bin")
         #     torch.save(model.state_dict(), PATH)
         #     logging.info(f"Model Saved under {PATH}")
-        if val_loss >= best_score:
+        if val_loss <= best_score:
             # logging.info(
             #    f"{model_name} Model Monitoring Metric {metrics_to_watch[0]} Increased ({best_score:0.4f} ---> {metric_to_monitor:0.4f})"
             # )
