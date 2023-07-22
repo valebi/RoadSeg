@@ -224,7 +224,7 @@ class CleanBingDataset(SegmentationDataset):
                     border_mode=cv2.BORDER_CONSTANT,
                 ),
                 A.augmentations.geometric.rotate.Rotate(
-                    limit=180, p=0.75, border_mode=cv2.BORDER_CONSTANT
+                    limit=180, p=0.25, border_mode=cv2.BORDER_CONSTANT
                 ),
                 A.augmentations.crops.transforms.RandomResizedCrop(
                     CFG.img_size,
