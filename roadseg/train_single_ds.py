@@ -190,11 +190,6 @@ def run_training(
     # best_epoch     = -1
     history = defaultdict(list)
 
-    # freeze the encoder
-    if "finetune" in model_name:
-        for param in model.module.encoder.parameters():
-            param.requires_grad = False
-
     best_score = -np.inf
     metric_to_monitor = -np.inf
     for epoch in range(1, num_epochs + 1):
