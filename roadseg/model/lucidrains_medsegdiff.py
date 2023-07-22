@@ -523,7 +523,7 @@ class MedSegDiff(nn.Module):
     ):
         super().__init__()
 
-        self.model = model if isinstance(model, Unet) else model.module
+        self.model = model
 
         self.input_img_channels = self.model.input_img_channels
         self.mask_channels = self.model.mask_channels
