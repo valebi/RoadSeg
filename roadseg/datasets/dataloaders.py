@@ -43,7 +43,7 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=False if CFG.smp_model != "DeepLabV3" else True,
+        drop_last=False,
     )
 
     # k-fold split of finetuning datasets
@@ -72,7 +72,7 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False if CFG.smp_model != "DeepLabV3" else True,
+            drop_last=False,
         )
         comp_splits.append((comp_train_loader, comp_val_loader))
     return train_loader, val_loader, comp_splits
