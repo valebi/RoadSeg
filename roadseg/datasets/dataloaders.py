@@ -35,7 +35,7 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=True,
+        drop_last=False if CFG.smp_model != "DeepLabV3" else True,
     )
     val_loader = DataLoader(
         val_dataset,
@@ -43,7 +43,7 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=True,
+        drop_last=False if CFG.smp_model != "DeepLabV3" else True,
     )
 
     # k-fold split of finetuning datasets
@@ -63,7 +63,7 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False,
+            drop_last=False if CFG.smp_model != "DeepLabV3" else True,
         )
         # val dataset is shuffled to get random plots
         comp_val_loader = DataLoader(
@@ -72,7 +72,7 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False,
+            drop_last=False if CFG.smp_model != "DeepLabV3" else True,
         )
         comp_splits.append((comp_train_loader, comp_val_loader))
     return train_loader, val_loader, comp_splits
