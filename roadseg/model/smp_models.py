@@ -7,7 +7,8 @@ from segmentation_models_pytorch.encoders import get_encoder
 from torch import nn
 
 import roadseg.model.dummy_unet as dummy_unet
-from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter
+
+# from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter
 from roadseg.model.lucidrains_medsegdiff import MedSegDiff, Unet
 
 
