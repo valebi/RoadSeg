@@ -175,6 +175,11 @@ def parse_args() -> argparse.Namespace:
         help="Backbone for pytorch-segmentation-models",
     )
     parser.add_argument(
+        "--use_diffusion",
+        action="store_true",
+        help="Build the smp model within a DiffusionAdapter.",
+    )
+    parser.add_argument(
         "--train_batch_size",
         type=int,
         default=32,
