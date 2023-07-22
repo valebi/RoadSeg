@@ -35,7 +35,7 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=False,
+        drop_last=True,
     )
     val_loader = DataLoader(
         val_dataset,
@@ -43,7 +43,7 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=False,
+        drop_last=True,
     )
 
     # k-fold split of finetuning datasets
