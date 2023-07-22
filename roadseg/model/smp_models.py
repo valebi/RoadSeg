@@ -49,7 +49,7 @@ def build_model(CFG, num_classes):
         """
         from temp import OurDiffuser, OurUnet
 
-        diffuser = OurDiffuser(smp_encoder_name=CFG.smp_encoder)
+        diffuser = OurDiffuser(smp_encoder_name=CFG.smp_backbone)
         encoding_model = diffuser.encoder
         if CFG.initial_model:
             diffuser.load_encoder_weights(CFG.initial_model)
