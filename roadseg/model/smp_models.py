@@ -54,9 +54,9 @@ def build_model(CFG, num_classes):
         if CFG.initial_model:
             diffuser.load_encoder_weights(CFG.initial_model)
         unet = OurUnet(
-            dim=64,
+            dim=16,
             image_size=CFG.img_size,
-            dim_mults=(1, 2, 4, 8, 16),
+            dim_mults=(1, 2, 2, 4, 8),
             full_self_attn=(False, False, False, False, False),
             mask_channels=1,
             input_img_channels=3,
