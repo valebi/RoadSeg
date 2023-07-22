@@ -134,7 +134,7 @@ def parse_args() -> argparse.Namespace:
         "--smp_model",
         type=str,
         default="Unet",
-        choices=["Unet", "UnetPlusPlus", "DeepLabV3"],
+        choices=["Unet", "UnetPlusPlus", "DeepLabV3", "DeepLabV3+"],
         help="Model (/Framework) for pytorch-segmentation-models",
     )
     parser.add_argument(
