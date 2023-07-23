@@ -7,8 +7,7 @@ from segmentation_models_pytorch.encoders import get_encoder
 from torch import nn
 
 import roadseg.model.dummy_unet as dummy_unet
-
-# from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter
+from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter
 from roadseg.model.lucidrains_medsegdiff import MedSegDiff, Unet
 
 
@@ -32,38 +31,45 @@ def build_model(CFG, num_classes):
     if CFG.smp_backbone == "dummy-unet":
         return dummy_unet.build_model(CFG, num_classes)
     elif CFG.use_diffusion:
-        """
-        CFG.use_diffusion = False
-        model = build_model(CFG, num_classes)
-        CFG.use_diffusion = True
-        time_dim = 31
-        diffusion_encoder = get_encoder(
-            CFG.smp_backbone,
-            in_channels=time_dim + 1,
-            depth=encoder_depth,
-            weights=CFG.smp_encoder_init_weights,
-        )
-        adapter = DiffusionAdapter(model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim)
-        diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0").to(CFG.device)  # 1000
-        return diffusion
-        """
-        from temp import OurDiffuser, OurUnet
+        if True:
+            # dummy version
+            CFG.use_diffusion = False
+            model = build_model(CFG, num_classes)
+            CFG.use_diffusion = True
+            time_dim = 32
+            diffusion_encoder = get_encoder(
+                CFG.smp_backbone,
+                in_channels=time_dim + 1,
+                depth=encoder_depth,
+                weights=CFG.smp_encoder_init_weights,
+                output_stride=model.module.encoder.output_stride,
+            )
+            adapter = DiffusionAdapter(
+                model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim
+            )
+            diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0").to(
+                CFG.device
+            )  # 1000
+            return diffusion
+        else:
+            # real version
+            from temp import OurDiffuser, OurUnet
 
-        diffuser = OurDiffuser(smp_encoder_name=CFG.smp_backbone)
-        encoding_model = diffuser.encoder
-        if CFG.initial_model:
-            diffuser.load_encoder_weights(CFG.initial_model)
-        unet = OurUnet(
-            dim=16,
-            image_size=CFG.img_size,
-            dim_mults=(1, 2, 2, 4, 8),
-            full_self_attn=(False, False, False, False, False),
-            mask_channels=1,
-            input_img_channels=3,
-            self_condition=False,
-            encoding_model=encoding_model,
-        )
-        return MedSegDiff(unet, timesteps=100, objective="pred_x0").to(CFG.device)
+            diffuser = OurDiffuser(smp_encoder_name=CFG.smp_backbone)
+            encoding_model = diffuser.encoder
+            if CFG.initial_model:
+                diffuser.load_encoder_weights(CFG.initial_model)
+            unet = OurUnet(
+                dim=16,
+                image_size=CFG.img_size,
+                dim_mults=(1, 2, 2, 4, 8),
+                full_self_attn=(False, False, False, False, False),
+                mask_channels=1,
+                input_img_channels=3,
+                self_condition=False,
+                encoding_model=encoding_model,
+            )
+            return MedSegDiff(unet, timesteps=100, objective="pred_x0").to(CFG.device)
     elif CFG.smp_model == "Unet":
         model = smp.Unet(
             encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
