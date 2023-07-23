@@ -48,7 +48,7 @@ def build_model(CFG, num_classes):
                 model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim
             )
             diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0")  # 1000
-            diffusion = nn.DataParallel(diffusion).to(CFG.device)
+            diffusion = diffusion.to(CFG.device)
             return diffusion
         else:
             # real version
