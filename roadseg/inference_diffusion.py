@@ -15,7 +15,7 @@ from roadseg.utils.mask_to_submission import (
 
 
 @torch.no_grad()
-def pred_from_dataloader(model, dl, device, num_ensemble=2):
+def pred_from_dataloader(model, dl, device, num_ensemble=2, road_class=1):
     model.to(device)
     model.eval()
     preds = []
@@ -23,7 +23,7 @@ def pred_from_dataloader(model, dl, device, num_ensemble=2):
         # ensembled prediction
         pred = np.mean(
             [
-                model.sample(imgs.to(device)).cpu().detach().numpy()[:, 0]
+                model.sample(imgs.to(device)).cpu().detach().numpy()[:, road_class]
                 for i in range(num_ensemble)
             ],
             axis=0,
@@ -56,7 +56,9 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     preds = []
     for (d,) in dl:
         # ensembled prediction
-        pred = np.mean([model.sample(d).cpu().detach().numpy()[:, 0] for i in range(5)], axis=0)
+        pred = np.mean(
+            [model.sample(d).cpu().detach().numpy()[:, road_class] for i in range(5)], axis=0
+        )
         preds.append(pred)
     pred = np.concatenate(preds, axis=0)
 
