@@ -39,7 +39,7 @@ def build_model(CFG, num_classes):
             time_dim = 32
             diffusion_encoder = get_encoder(
                 CFG.smp_backbone,
-                in_channels=time_dim + 1,
+                in_channels=time_dim + 2,
                 depth=encoder_depth,
                 weights=CFG.smp_encoder_init_weights,
                 output_stride=model.module.encoder.output_stride,

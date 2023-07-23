@@ -12,7 +12,7 @@ class DiffusionAdapter(Unet):
         self.smp_model = smp_model
         self.diffusion_encoder = diffusion_encoder
         self.input_img_channels = 3
-        self.mask_channels = 1
+        self.mask_channels = 2
         self.self_condition = False
         self.image_size = img_size
         self.skip_connect_condition_fmaps = None
