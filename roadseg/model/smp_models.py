@@ -50,6 +50,7 @@ def build_model(CFG, num_classes):
             diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0").to(
                 CFG.device
             )  # 1000
+            diffusion = nn.DataParallel(diffusion)
             return diffusion
         else:
             # real version
