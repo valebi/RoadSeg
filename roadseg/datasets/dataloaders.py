@@ -41,7 +41,7 @@ def get_dataloaders(CFG, transforms):
         val_dataset,
         batch_size=CFG.val_batch_size,
         num_workers=CFG.num_workers,
-        shuffle=True,
+        shuffle=True if not CFG.use_diffusion else False,
         pin_memory=True,
         drop_last=False,
     )
@@ -74,7 +74,7 @@ def get_dataloaders(CFG, transforms):
             val_subset,
             batch_size=CFG.val_batch_size,
             num_workers=CFG.num_workers,
-            shuffle=True,
+            shuffle=True if not CFG.use_diffusion else False,
             pin_memory=True,
             drop_last=False,
         )
