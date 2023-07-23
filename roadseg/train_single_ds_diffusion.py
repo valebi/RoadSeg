@@ -58,6 +58,8 @@ def train_one_epoch(
 
         with amp.autocast(enabled=True):
             # y_pred = model(images)
+            # make labels one-hot
+            labels = torch.cat([1 - labels[:, None], labels[:, None]], dim=1)
             loss = diffusion(labels.float(), images)
             # y_pred = y_pred * loss_mask[:, None]
             # loss = criterion(y_pred[:, 1], labels.float())
