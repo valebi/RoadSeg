@@ -54,7 +54,7 @@ class DiffusionAdapter(Unet):
 
         # add it! (leave first one, it is the image itself)
         features = encoder_features[:1] + [
-            encoder_features[i] + 0 * diffusion_features[i] for i in range(1, len(encoder_features))
+            encoder_features[i] + diffusion_features[i] for i in range(1, len(encoder_features))
         ]
         decoder_output = smp_model.decoder(*features)
 
