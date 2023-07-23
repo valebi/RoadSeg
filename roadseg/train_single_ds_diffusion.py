@@ -290,9 +290,10 @@ def run_training(
     # load best model weights
     model.load_state_dict(best_model_wts)
 
-    y_pred = pred_from_dataloader(model, valid_loader, device=device, num_ensemble=2)
-    imgs = torch.cat([img for img, _ in valid_loader], axis=0)
-    labels = torch.cat([labels[:, 0] for _, labels in valid_loader], axis=0)
+    small_valid_loader = (d for i, d in enumerate(valid_loader) if i < 2)  # two batches at most
+    y_pred = pred_from_dataloader(model, small_valid_loader, device=device, num_ensemble=2)
+    imgs = torch.cat([img for img, _ in small_valid_loader], axis=0)
+    labels = torch.cat([labels[:, 0] for _, labels in small_valid_loader], axis=0)
     val_scores = []
 
     for i, metric in enumerate(get_metrics(metrics_to_watch)):
