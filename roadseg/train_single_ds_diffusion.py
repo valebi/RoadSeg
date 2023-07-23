@@ -129,6 +129,7 @@ def valid_one_epoch(
 
         batch_size = images.size(0)
 
+        labels = torch.cat([1 - labels[:, None], labels[:, None]], dim=1)
         loss = diffusion(labels.float(), images)
         # y_pred = y_pred * loss_mask[:, None]
         # loss = criterion(y_pred[:, 1], labels.float())
