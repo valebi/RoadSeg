@@ -39,7 +39,8 @@ class PatchGANDiscriminator(nn.Module):
         x = F.leaky_relu(self.conv2_bn(self.conv2(x)), 0.2)
         x = F.leaky_relu(self.conv3_bn(self.conv3(x)), 0.2)
         x = F.leaky_relu(self.conv4_bn(self.conv4(x)), 0.2)
-        x = F.sigmoid(self.conv5(x))
+        x = self.conv5(x)
+        # x = F.sigmoid(self.conv5(x))
 
         return x
 
@@ -50,8 +51,8 @@ class PatchGANDiscriminatorLoss(nn.Module):
 
         device  = "cpu" if device is None else device
 
-        self.discriminator = PatchGANDiscriminator(in_channels=1, d = 32, init_weights = discriminator_init_weights).to(device)
-        self.discriminator_criterion = nn.BCELoss()
+        self.discriminator = PatchGANDiscriminator(in_channels=1, d = 64, init_weights = discriminator_init_weights).to(device)
+        self.discriminator_criterion = nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(self.discriminator.parameters(), lr=discriminator_lr, weight_decay=1e-5)
         self._warmup_iters = 100
 
