@@ -58,7 +58,7 @@ def build_model(CFG, num_classes):
             CFG.use_diffusion = False
             init_model = CFG.initial_model
             CFG.initial_model = None
-            model = build_model(CFG, num_classes)
+            model = build_model(CFG, num_classes).module
             loaded_weights = False
 
             if init_model:
@@ -84,9 +84,7 @@ def build_model(CFG, num_classes):
                 model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim
             )
 
-            diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0").to(
-                CFG.device
-            )  # 1000
+            diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0")  # 1000
 
             if init_model and not loaded_weights:
                 # try loading the whole model
@@ -94,7 +92,7 @@ def build_model(CFG, num_classes):
                 logging.info(f"Loaded weights of ENTIRE MODEL")
 
             diffusion = diffusion.to(CFG.device)
-            # diffusion = nn.DataParallel(diffusion)
+            diffusion = nn.DataParallel(diffusion)
             return diffusion
         else:
             # real version
@@ -149,6 +147,7 @@ def build_model(CFG, num_classes):
     if CFG.initial_model and not CFG.use_diffusion:
         model = try_load_weights(model, CFG.initial_model, device=CFG.device)
     model.to(CFG.device)
+    model = nn.DataParallel(model)
     return model
 
 
