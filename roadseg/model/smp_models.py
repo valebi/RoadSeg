@@ -1,3 +1,4 @@
+import copy
 import logging
 from collections import OrderedDict
 
@@ -9,6 +10,29 @@ from torch import nn
 import roadseg.model.dummy_unet as dummy_unet
 from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter
 from roadseg.model.lucidrains_medsegdiff import MedSegDiff, Unet
+
+
+def try_load_weights(model, path):
+    success = False
+    try:
+        state_dict = torch.load(path)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Model weights file {path} not found.")
+
+    try:
+        filtered_keys = []
+        for k, v in state_dict.items():
+            filtered_keys.append((k.replace("module.", ""), v))
+        state_dict = OrderedDict(filtered_keys)
+        model.load_state_dict(state_dict, strict=True)
+        success = True
+    except:
+        raise AttributeError(
+            f"Model weights loading failed. Please initialize the model with the same paramaters used in initial training."
+        )
+    logging.info(f"Model weights loaded from {path}.")
+    del state_dict, filtered_keys
+    return model, success
 
 
 def build_model(CFG, num_classes):
@@ -47,8 +71,15 @@ def build_model(CFG, num_classes):
             adapter = DiffusionAdapter(
                 model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim
             )
+
             diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0")  # 1000
+            if CFG.initial_model:
+                _copy = copy.deepcopy(diffusion)
+                diffusion, success = try_load_weights(diffusion, CFG.initial_model)
+                diffusion = _copy if not success else diffusion
+
             diffusion = diffusion.to(CFG.device)
+
             return diffusion
         else:
             # real version
@@ -100,25 +131,8 @@ def build_model(CFG, num_classes):
     else:
         raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
 
-    if CFG.initial_model and not CFG.use_diffusion:
-        try:
-            state_dict = torch.load(CFG.initial_model)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Model weights file {CFG.initial_model} not found.")
-
-        try:
-            filtered_keys = []
-            for k, v in state_dict.items():
-                filtered_keys.append((k.replace("module.", ""), v))
-            state_dict = OrderedDict(filtered_keys)
-            model.load_state_dict(state_dict, strict=True)
-        except:
-            raise AttributeError(
-                f"Model weights loading failed. Please initialize the model with the same paramaters used in initial training."
-            )
-        logging.info(f"Model weights loaded from {CFG.initial_model}.")
-        del state_dict, filtered_keys
-
+    if CFG.initial_model:
+        model, success = try_load_weights(model, CFG.initial_model)
     model.to(CFG.device)
     model = nn.DataParallel(model)
     return model
