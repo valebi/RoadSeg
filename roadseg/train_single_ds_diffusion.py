@@ -39,7 +39,7 @@ def train_one_epoch(
     file=None,
 ):
     n_accumulate = 2  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
-    # model.train()
+    diffusion.train()
     scaler = amp.GradScaler()
 
     dataset_size = 0
@@ -250,6 +250,7 @@ def run_training(
                 f"{model_name}/Valid Loss": val_loss,
                 f"{model_name}/Epoch": epoch,
             }
+            wandb.log(log_dict)
 
         log_str = f"Valid Loss: {val_loss:0.4f}"
         # for metric, score in zip(metrics_to_watch, val_scores):
@@ -304,10 +305,10 @@ def run_training(
 
     if use_wandb:
         for metric, score in zip(metrics_to_watch, val_scores):
-            log_dict[f"{model_name}/Valid {metric}"] = score
+            log_dict[f"{model_name}/Val {metric}"] = score
 
         for metric, score in zip(metrics_to_watch, val_scores):
-            log_dict[f"{model_name}/Valid {metric}"] = score
+            log_dict[f"{model_name}/Val {metric}"] = score
         if "finetune" in model_name:
             wandb.log(log_dict)
         else:
