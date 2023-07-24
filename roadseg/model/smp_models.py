@@ -92,7 +92,7 @@ def build_model(CFG, num_classes):
                 logging.info(f"Loaded weights of ENTIRE MODEL")
 
             diffusion = diffusion.to(CFG.device)
-            # diffusion = nn.DataParallel(diffusion)
+            diffusion = nn.DataParallel(diffusion)
             return diffusion
         else:
             # real version
