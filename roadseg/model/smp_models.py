@@ -147,7 +147,7 @@ def build_model(CFG, num_classes):
     if CFG.initial_model and not CFG.use_diffusion:
         model = try_load_weights(model, CFG.initial_model, device=CFG.device)
 
-    model.to(CFG.device)
+    # model.to(CFG.device)
     model = nn.DataParallel(model)
     return model
 
