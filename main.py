@@ -5,6 +5,7 @@ import pathlib
 import time
 from argparse import Namespace
 
+from torch import nn
 from torchsummary import summary
 
 from roadseg.datasets.dataloaders import get_dataloaders
@@ -36,6 +37,8 @@ def main(CFG: Namespace):
         logging.info(f"Downloaded model to {destination}.")
 
     model = build_model(CFG, num_classes=2)
+    model.to(CFG.device)
+    model = nn.DataParallel(model)
 
     if CFG.debug:
         imgs, msks = next(iter(train_loader))
