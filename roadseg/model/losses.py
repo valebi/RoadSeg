@@ -1,5 +1,7 @@
 import logging
+from collections import defaultdict
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -52,7 +54,7 @@ class PatchGANDiscriminatorLoss(nn.Module):
         device  = "cpu" if device is None else device
 
         self.discriminator = PatchGANDiscriminator(in_channels=1, d = 64, init_weights = discriminator_init_weights).to(device)
-        self.discriminator_criterion = nn.BCEWithLogitsLoss()
+        self.discriminator_criterion = nn.BCEWithLogitsLoss() ##Using pure BCE with sigmoid throws exception at autocast
         self.optimizer = optim.Adam(self.discriminator.parameters(), lr=discriminator_lr, weight_decay=1e-5)
         self._warmup_iters = 100
 
@@ -62,10 +64,12 @@ class PatchGANDiscriminatorLoss(nn.Module):
         # self.scheduler = optim.lr_scheduler.SequentialLR(self.optimizer, [self.wmup_scheduler,  self.actual_scheduler] ,milestones=[self._warmup_iters], verbose=True)   
 
         self.smooth_factor = 0.1
-        
         self.loss = 0
+
         self.saving_freq = 2000
+        self.logging_freq = 10
         self.iter = 0
+        self.history  = defaultdict(list)
 
     def forward(self, input, label):
         
@@ -81,13 +85,10 @@ class PatchGANDiscriminatorLoss(nn.Module):
             real_pred = self.discriminator(label)
             fake_pred = self.discriminator(input.detach())
 
-            try:
-                real_loss = self.discriminator_criterion(real_pred, torch.ones_like (real_pred, device = label.device, requires_grad=False))
-                fake_loss = self.discriminator_criterion(fake_pred, torch.zeros_like(fake_pred, device = fake_pred.device, requires_grad=False))
-            except RuntimeError:
-                print(f"Real_pred {real_pred.max(), real_pred.min()}")
-                print(f"Fake_pred {fake_pred.max(), fake_pred.min()}")
-                raise RuntimeError
+            
+            real_loss = self.discriminator_criterion(real_pred, torch.ones_like (real_pred, device = label.device, requires_grad=False))
+            fake_loss = self.discriminator_criterion(fake_pred, torch.zeros_like(fake_pred, device = fake_pred.device, requires_grad=False))
+            
 
 
             self.loss = (real_loss + fake_loss) * 0.5
@@ -95,11 +96,23 @@ class PatchGANDiscriminatorLoss(nn.Module):
             self.loss.backward()
             self.optimizer.step()
             # self.scheduler.step(self.loss)
-
-            logging.info(f"Discriminator Loss:({self.loss:0.4f}")
+    
             self.iter = (self.iter + 1) % self.saving_freq
             if self.iter == 0:
                 torch.save(self.discriminator.state_dict(), "discriminator.pth")
+                
+                fig, ax = plt.subplots(1, 1, figsize=(10, 4))
+                ax.set_title("Pretraining: ")   
+                ax.plot(self.history["loss"])
+                ax.legend(["loss"])
+                fig.savefig(f"discriminator_loss.png")
+                plt.close("all")
+                self.history["loss"] = []
+            
+            if self.iter % self.logging_freq == 0:
+                self.history["loss"].append(self.loss.item())
+                logging.info(f"Discriminator Loss:({self.loss:0.4f}")
+                
         
         fake_pred = self.discriminator(input)
         ##Then return the discriminator loss
