@@ -45,7 +45,6 @@ def train_one_epoch(
     dataset_size = 0
     running_loss = 0.0
 
-    diffusion = diffusion.to(device)
     pbar = tqdm(
         enumerate(dataloader), total=len(dataloader), file=file, desc=f"Train epoch {epoch}"
     )

@@ -66,6 +66,7 @@ def build_model(CFG, num_classes):
                 _copy = copy.deepcopy(model)
                 try:
                     model = try_load_weights(model, init_model, device=CFG.device)
+                    logging.info(f"Loaded weights of ENCODER/DECODER ONLY")
                     loaded_weights = True
                 except:
                     model = _copy
@@ -87,8 +88,8 @@ def build_model(CFG, num_classes):
 
             if init_model and not loaded_weights:
                 # try loading the whole model
-                _copy = copy.deepcopy(diffusion)
                 diffusion = try_load_weights(diffusion, init_model, device=CFG.device)
+                logging.info(f"Loaded weights of ENTIRE MODEL")
 
             diffusion = diffusion.to(CFG.device)
             diffusion = nn.DataParallel(diffusion)
