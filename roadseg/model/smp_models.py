@@ -58,7 +58,7 @@ def build_model(CFG, num_classes):
             CFG.use_diffusion = False
             init_model = CFG.initial_model
             CFG.initial_model = None
-            model = build_model(CFG, num_classes)
+            model = build_model(CFG, num_classes).module
             loaded_weights = False
 
             if init_model:
