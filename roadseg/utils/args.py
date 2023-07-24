@@ -218,6 +218,7 @@ def parse_args() -> argparse.Namespace:
             "smp_lovasz",
             "smp_tversky",
             "smp_soft_ce",
+            "patchgan_disc"
         ],
         help="Loss to be used for pretraining.",
     )
@@ -233,6 +234,7 @@ def parse_args() -> argparse.Namespace:
             "smp_lovasz",
             "smp_tversky",
             "smp_soft_ce",
+            "patchgan_disc"
         ],
         help="Loss to be used for finetuning.",
     )
