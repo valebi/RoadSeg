@@ -22,8 +22,8 @@ def try_load_weights(model, path, device):
         filtered_keys = []
         for k, v in state_dict.items():
             filtered_keys.append((k.replace("module.", ""), v))
-        state_dict = OrderedDict(filtered_keys)
-        model.load_state_dict(state_dict, strict=True)
+        filtered_keys = OrderedDict(filtered_keys)
+        model.load_state_dict(filtered_keys, strict=True)
     except:
         raise AttributeError(
             f"Model weights loading failed. Please initialize the model with the same paramaters used in initial training."
