@@ -80,8 +80,14 @@ class PatchGANDiscriminatorLoss(nn.Module):
             real_pred = self.discriminator(label)
             fake_pred = self.discriminator(input.detach())
 
-            real_loss = self.discriminator_criterion(real_pred, torch.ones_like (real_pred, device = label.device, requires_grad=False))
-            fake_loss = self.discriminator_criterion(fake_pred, torch.zeros_like(fake_pred, device = fake_pred.device, requires_grad=False))
+            try:
+                real_loss = self.discriminator_criterion(real_pred, torch.ones_like (real_pred, device = label.device, requires_grad=False))
+                fake_loss = self.discriminator_criterion(fake_pred, torch.zeros_like(fake_pred, device = fake_pred.device, requires_grad=False))
+            except RuntimeError:
+                print(f"Real_pred {real_pred.max(), real_pred.min()}")
+                print(f"Fake_pred {fake_pred.max(), fake_pred.min()}")
+                raise RuntimeError
+
 
             self.loss = (real_loss + fake_loss) * 0.5
             
