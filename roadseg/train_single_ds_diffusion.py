@@ -60,7 +60,7 @@ def train_one_epoch(
             # y_pred = model(images)
             # make labels one-hot
             onehot_labels = torch.cat([1 - labels[:, None], labels[:, None]], dim=1)
-            loss = diffusion(onehot_labels.float(), images)
+            loss = diffusion(onehot_labels.to(torch.float32), images)
             # y_pred = y_pred * loss_mask[:, None]
             # loss = criterion(y_pred[:, 1], labels.float())
             loss = loss / n_accumulate
@@ -130,7 +130,7 @@ def valid_one_epoch(
         batch_size = images.size(0)
 
         onehot_labels = torch.cat([1 - labels[:, None], labels[:, None]], dim=1)
-        loss = diffusion(onehot_labels.float(), images)
+        loss = diffusion(onehot_labels.to(torch.float32), images)
         # y_pred = y_pred * loss_mask[:, None]
         # loss = criterion(y_pred[:, 1], labels.float())
 

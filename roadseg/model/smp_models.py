@@ -91,7 +91,7 @@ def build_model(CFG, num_classes):
                 diffusion = try_load_weights(diffusion, init_model, device=CFG.device)
 
             diffusion = diffusion.to(CFG.device)
-            # diffusion = nn.DataParallel(diffusion)
+            diffusion = nn.DataParallel(diffusion)
             return diffusion
         else:
             # real version
