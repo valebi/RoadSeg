@@ -88,7 +88,7 @@ def build_model(CFG, num_classes):
             if init_model and not loaded_weights:
                 # try loading the whole model
                 _copy = copy.deepcopy(diffusion)
-                diffusion = try_load_weights(diffusion, init_model)
+                diffusion = try_load_weights(diffusion, init_model, device=CFG.device)
 
             diffusion = diffusion.to(CFG.device)
 
