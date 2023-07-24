@@ -409,14 +409,14 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
         ax.legend(["train loss", "val loss"])
         fig.savefig(os.path.join(CFG.log_dir, f"finetuning_loss_fold_{fold}.png"))
         # plt.show()
-        scores_to_watch.append(
-            np.nanmax(history[f"Valid {CFG.metrics_to_watch[0]}"])
-        )  ##Needs to be added back later with monitoring
+        # scores_to_watch.append(
+        #    np.nanmax(history[f"Valid {CFG.metrics_to_watch[0]}"])
+        # )  ##Needs to be added back later with monitoring
 
         gc.collect()
 
     # logging.info(f"Best {CFG.metrics_to_watch[0]} scores after FT: {np.mean(scores_to_watch)}")
-    if CFG.wandb:
-        wandb.log({f"mean-{CFG.metrics_to_watch[0]}": np.mean(scores_to_watch)})
+    # if CFG.wandb:
+    #    wandb.log({f"mean-{CFG.metrics_to_watch[0]}": np.mean(scores_to_watch)})
 
-    return np.mean(scores_to_watch)
+    return 0  # np.mean(scores_to_watch)
