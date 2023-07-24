@@ -53,7 +53,7 @@ class PatchGANDiscriminatorLoss(nn.Module):
 
         device  = "cpu" if device is None else device
 
-        self.discriminator =  model = nn.DataParallel(PatchGANDiscriminator(in_channels=1, d = 64, init_weights = discriminator_init_weights).to(device))
+        self.discriminator = nn.DataParallel(PatchGANDiscriminator(in_channels=1, d = 64, init_weights = discriminator_init_weights).to(device))
         self.discriminator_criterion = nn.BCEWithLogitsLoss() ##Using pure BCE with sigmoid throws exception at autocast
         self.optimizer = optim.Adam(self.discriminator.parameters(), lr=discriminator_lr, weight_decay=1e-5)
         self._warmup_iters = 100
