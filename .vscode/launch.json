@@ -18,6 +18,8 @@
                 "imagenet",
                 "--smp_model",
                 "DeepLabV3",
+                "--initial_model",
+                "logs/onat-last_epoch-pretrain.bin",
                 "--use_diffusion",
                 "--slim",
                 "--decoder_depth",
