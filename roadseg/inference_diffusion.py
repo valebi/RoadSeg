@@ -21,9 +21,11 @@ def pred_from_dataloader(model, dl, device, num_ensemble=2, road_class=1):
     preds = []
     for imgs, masks in dl:
         # ensembled prediction
+        if isinstance(model, torch.nn.DataParallel):
+            model = model.module
         pred = np.mean(
             [
-                model.module.sample(imgs.to(device)).cpu().detach().numpy()[:, road_class]
+                model.sample(imgs.to(device)).cpu().detach().numpy()[:, road_class]
                 for i in range(num_ensemble)
             ],
             axis=0,
@@ -56,8 +58,12 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     preds = []
     for (d,) in dl:
         # ensembled prediction
+
+        if isinstance(model, torch.nn.DataParallel):
+            model = model.module
+
         pred = np.mean(
-            [model.module.sample(d).cpu().detach().numpy()[:, road_class] for i in range(5)], axis=0
+            [model.sample(d).cpu().detach().numpy()[:, road_class] for i in range(5)], axis=0
         )
         preds.append(pred)
     pred = np.concatenate(preds, axis=0)
