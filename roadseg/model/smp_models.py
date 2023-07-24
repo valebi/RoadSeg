@@ -12,10 +12,9 @@ from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter
 from roadseg.model.lucidrains_medsegdiff import MedSegDiff, Unet
 
 
-def try_load_weights(model, path):
-    success = False
+def try_load_weights(model, path, device):
     try:
-        state_dict = torch.load(path)
+        state_dict = torch.load(path, map_location=device)
     except FileNotFoundError:
         raise FileNotFoundError(f"Model weights file {path} not found.")
 
@@ -25,14 +24,13 @@ def try_load_weights(model, path):
             filtered_keys.append((k.replace("module.", ""), v))
         state_dict = OrderedDict(filtered_keys)
         model.load_state_dict(state_dict, strict=True)
-        success = True
     except:
         raise AttributeError(
             f"Model weights loading failed. Please initialize the model with the same paramaters used in initial training."
         )
     logging.info(f"Model weights loaded from {path}.")
     del state_dict, filtered_keys
-    return model, success
+    return model
 
 
 def build_model(CFG, num_classes):
@@ -58,7 +56,20 @@ def build_model(CFG, num_classes):
         if True:
             # dummy version
             CFG.use_diffusion = False
+            init_model = CFG.initial_model
+            CFG.initial_model = None
             model = build_model(CFG, num_classes)
+            loaded_weights = False
+
+            if init_model:
+                # try loading the encoder/decoder only
+                _copy = copy.deepcopy(model)
+                try:
+                    model = try_load_weights(model, init_model, device=CFG.device)
+                    loaded_weights = True
+                except:
+                    model = _copy
+
             CFG.use_diffusion = True
             time_dim = 32
             diffusion_encoder = get_encoder(
@@ -73,10 +84,11 @@ def build_model(CFG, num_classes):
             )
 
             diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0")  # 1000
-            if CFG.initial_model:
+
+            if init_model and not loaded_weights:
+                # try loading the whole model
                 _copy = copy.deepcopy(diffusion)
-                diffusion, success = try_load_weights(diffusion, CFG.initial_model)
-                diffusion = _copy if not success else diffusion
+                diffusion = try_load_weights(diffusion, init_model)
 
             diffusion = diffusion.to(CFG.device)
 
@@ -131,8 +143,8 @@ def build_model(CFG, num_classes):
     else:
         raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
 
-    if CFG.initial_model:
-        model, success = try_load_weights(model, CFG.initial_model)
+    if CFG.initial_model and not CFG.use_diffusion:
+        model = try_load_weights(model, CFG.initial_model, device=CFG.device)
     model.to(CFG.device)
     model = nn.DataParallel(model)
     return model
