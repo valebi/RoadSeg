@@ -37,7 +37,7 @@ def main(CFG: Namespace):
         logging.info(f"Downloaded model to {destination}.")
 
     model = build_model(CFG, num_classes=2)
-    model.to(CFG.device)
+    model = model.to(CFG.device)
     model = nn.DataParallel(model)
 
     if CFG.debug:
