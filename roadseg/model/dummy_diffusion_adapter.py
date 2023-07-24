@@ -9,7 +9,7 @@ from roadseg.model.lucidrains_medsegdiff import SinusoidalPosEmb, Unet
 class DiffusionAdapter(Unet):
     def __init__(self, smp_model, diffusion_encoder, img_size, dim=64):
         super().__init__(dim=64, image_size=img_size)
-        self.smp_model = smp_model.module
+        self.smp_model = smp_model
         self.diffusion_encoder = diffusion_encoder
         self.input_img_channels = 3
         self.mask_channels = 2
