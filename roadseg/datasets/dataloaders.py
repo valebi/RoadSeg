@@ -49,7 +49,10 @@ def get_dataloaders(CFG, transforms):
     # k-fold split of finetuning datasets
     if CFG.onepiece:
         comp_dataset = OnepieceCILDataset(CFG, transforms=transforms)
-        comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=None)
+        if CFG.use_diffusion and CFG.partial_diffusion:
+            comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=transforms)
+        else:
+            comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=None)
     else:
         comp_dataset = CIL23Dataset(CFG, transforms=transforms)
         comp_dataset_notransforms = CIL23Dataset(CFG, transforms=None)

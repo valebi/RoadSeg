@@ -22,7 +22,7 @@ class DiffusionAdapter(Unet):
             nn.GELU(),
             nn.Linear(dim, dim),
         )
-        self._freeze(self.smp_model)
+        self._freeze(self.smp_model.encoder)
 
     def _freeze(self, module):
         for child in module.children():

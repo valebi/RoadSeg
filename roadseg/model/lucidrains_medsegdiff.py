@@ -769,24 +769,32 @@ class MedSegDiff(nn.Module):
         # modify noise as product of x_start and t0_mask
         b, c, h, w = x_start.shape
         noise = default(noise, lambda: torch.randn_like(x_start))
-
+        noise = 0.5 + 0.5 * noise  # shift to 0.5-centered distribution
+        noise = torch.clamp(noise, min=0.0, max=1.0)  # clamp to [0,1]
         # noise sample
 
         x = self.q_sample(x_start=x_start, t=t, noise=noise)
 
         """
         import matplotlib.pyplot as plt
-        plt.subplot(1, 3, 1)
+        plt.subplot(1, 4, 1)
         plt.imshow(x_start[0, 0].cpu().numpy())
-        plt.subplot(1, 3, 2)
-        plt.imshow(t0_mask[0].cpu().numpy())
-        plt.subplot(1, 3, 3)
-        plt.imshow((
-            x * (1 - t0_mask) + (x_start * t0_mask))[0,0].cpu().numpy())
-        plt.show()"""
+        if t0_mask is not None:
+            plt.subplot(1, 4, 2)
+            plt.imshow(t0_mask[0].cpu().numpy())
+        if loss_mask is not None:
+            plt.subplot(1, 4, 3)
+            plt.imshow(loss_mask[0].cpu().numpy())
 
         if t0_mask is not None:
-            x = x * (1 - t0_mask) + (x_start * t0_mask)
+            plt.subplot(1, 4, 4)
+            plt.imshow((
+                x * (1 - t0_mask) + (x_start * t0_mask))[0,0].cpu().numpy())
+        plt.show()
+        """
+
+        if t0_mask is not None:
+            x = x * (1 - t0_mask[:, None]) + (x_start * t0_mask[:, None])
 
         # if doing self-conditioning, 50% of the time, predict x_start from current set of times
         # and condition with unet with that

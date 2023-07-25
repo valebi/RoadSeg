@@ -331,7 +331,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         optimizer, CFG, is_finetuning=False, n_train_batches=len(train_loader)
     )
     if CFG.wandb:
-        wandb.watch(model, criterion=get_loss(CFG.pretraining_loss), log_freq=7000)
+        wandb.watch(model, criterion=get_loss(CFG.pretraining_loss), log_freq=100)
 
     progress_log_file = (
         open(os.path.join(CFG.log_dir, f"{model_name}_progress.log"), "a")
