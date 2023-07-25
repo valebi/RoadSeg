@@ -98,24 +98,25 @@
                 "--scheduler_warmup_iters",
                 "10",
                 "--pretraining_lr",
-                "0.0000",
+                "0.0001",
                 "--finetuning_lr",
-                "0.0000",
+                "0.0001",
                 "--pretraining_loss",
-                "patchgan_disc",
+                "patchgan_dice",
                 "--finetuning_loss",
-                "smp_dice",
+                "patchgan_dice",
                 "--metrics_to_watch",
                 "iou",
                 "compf1",
                 "precision",
                 "recall",
-                "f1"
+                "f1",
                 // "--initial_model",
-                // "/Users/onat/School/RoadSeg/temp_folder/chk.bin",
+                // "temp_folder/chk.bin",
                 // "--model_download_drive_id",
-                // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
-                // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
+                // "1uPULdquvoGghCqRYL3bgqjCKBTkLkc2F",
+                "--discriminator_download_drive_id",
+                "1c6RhbklRIUpOEI8DrxUoTXwTa4rgo9VK"
             ]
         },
         {

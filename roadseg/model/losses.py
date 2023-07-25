@@ -1,7 +1,9 @@
 import logging
-from collections import defaultdict
+import os
+from collections import OrderedDict, defaultdict
 
 import matplotlib.pyplot as plt
+import segmentation_models_pytorch.losses as smp_l
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,7 +27,12 @@ class PatchGANDiscriminator(nn.Module):
 
         ## Not tested
         if init_weights is not None:
-            self.load_state_dict(torch.load(init_weights))
+            state_dict = torch.load(init_weights, map_location="cpu")
+            filtered_keys = []
+            for k, v in state_dict.items():
+                filtered_keys.append((k.replace("module.", ""), v))
+            state_dict = OrderedDict(filtered_keys)
+            self.load_state_dict(state_dict)
 
     # weight_init
     def weight_init(self, mean, std):
@@ -48,10 +55,13 @@ class PatchGANDiscriminator(nn.Module):
 
 class PatchGANDiscriminatorLoss(nn.Module):
 
-    def __init__(self, discriminator_lr, device='cpu' ,  discriminator_init_weights = None):
+    def __init__(self, discriminator_lr, device='cpu' ,  discriminator_init_weights = ""):
         super().__init__()
 
         device  = "cpu" if device is None else device
+
+        self._discriminator_save_path = "discriminator.pth"
+        discriminator_init_weights = "discriminator.pth" if os.path.exists("discriminator.pth") else None
 
         self.discriminator = nn.DataParallel(PatchGANDiscriminator(in_channels=1, d = 64, init_weights = discriminator_init_weights).to(device))
         self.discriminator_criterion = nn.BCEWithLogitsLoss() ##Using pure BCE with sigmoid throws exception at autocast
@@ -59,9 +69,10 @@ class PatchGANDiscriminatorLoss(nn.Module):
         self._warmup_iters = 100
 
         #@TODO: We may add scheduler to the discriminator too
-        # self.wmup_scheduler = optim.lr_scheduler.LinearLR(self.optimizer,start_factor= 0.01, end_factor=1.0, total_iters= self._warmup_iters, verbose=True)
+        self.wmup_scheduler = optim.lr_scheduler.LinearLR(self.optimizer,start_factor= 0.01, end_factor=1.0, total_iters= self._warmup_iters, verbose=False)
+        self.actual_scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=30000, eta_min=1e-5, last_epoch=-1, verbose=False)
         # self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode = "max", factor = 0.75 ,patience=50, verbose=False)
-        # self.scheduler = optim.lr_scheduler.SequentialLR(self.optimizer, [self.wmup_scheduler,  self.actual_scheduler] ,milestones=[self._warmup_iters], verbose=True)   
+        self.scheduler = optim.lr_scheduler.SequentialLR(self.optimizer, [self.wmup_scheduler,  self.actual_scheduler] ,milestones=[self._warmup_iters], verbose=False)   
 
         self.smooth_factor = 0.1
         self.loss = 0
@@ -95,11 +106,11 @@ class PatchGANDiscriminatorLoss(nn.Module):
             
             self.loss.backward()
             self.optimizer.step()
-            # self.scheduler.step(self.loss)
+            self.scheduler.step()
     
             self.iter = (self.iter + 1) % self.saving_freq
             if self.iter == 0:
-                torch.save(self.discriminator.state_dict(), "discriminator.pth")
+                torch.save(self.discriminator.state_dict(), self._discriminator_save_path)
                 
                 fig, ax = plt.subplots(1, 1, figsize=(10, 4))
                 ax.set_title("Pretraining: ")   
@@ -118,3 +129,18 @@ class PatchGANDiscriminatorLoss(nn.Module):
         ##Then return the discriminator loss
         return self.discriminator_criterion(fake_pred, torch.ones_like(fake_pred, device = label.device, requires_grad=False))
     
+
+class DiceDisc(nn.Module):
+
+    def __init__(self,discriminator_lr, device='cpu' ,  discriminator_init_weights = ""):
+        super().__init__()
+        self.disc = PatchGANDiscriminatorLoss(discriminator_lr, device, discriminator_init_weights)
+        self.dice = smp_l.DiceLoss(mode="multiclass")
+
+        self.disc_weight = 0.4
+        self.dice_weight = 0.6
+
+    def forward(self, input, label):
+        return self.disc_weight * self.disc(input, label) + self.dice_weight * self.dice(input, label)
+    
+        

@@ -218,7 +218,8 @@ def parse_args() -> argparse.Namespace:
             "smp_lovasz",
             "smp_tversky",
             "smp_soft_ce",
-            "patchgan_disc"
+            "patchgan_disc",
+            "patchgan_dice"
         ],
         help="Loss to be used for pretraining.",
     )
@@ -234,7 +235,8 @@ def parse_args() -> argparse.Namespace:
             "smp_lovasz",
             "smp_tversky",
             "smp_soft_ce",
-            "patchgan_disc"
+            "patchgan_disc",
+            "patchgan_dice"
         ],
         help="Loss to be used for finetuning.",
     )
@@ -281,5 +283,10 @@ def parse_args() -> argparse.Namespace:
         default=1e-6,
         help="Weight decay for optimizer.",
     )
-
+    parser.add_argument(
+        "--discriminator_download_drive_id",
+        type=str,
+        default="",
+        help="One can download a discriminator from a public made google drive file.",
+    )
     return parser.parse_args()

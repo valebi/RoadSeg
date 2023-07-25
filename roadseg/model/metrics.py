@@ -6,7 +6,7 @@ import torch.nn as nn
 import torchmetrics
 import torchmetrics.classification
 
-from .losses import PatchGANDiscriminatorLoss
+from .losses import DiceDisc, PatchGANDiscriminatorLoss
 
 # @TODO: CLEANUP
 ##These all throws errors? Fixed versions below
@@ -80,7 +80,8 @@ def get_loss(name: str, device = None):
         ),  ##Per image does not change the result
         "smp_tversky": smp.losses.TverskyLoss(mode="multiclass"),
         "smp_soft_ce": smp.losses.SoftCrossEntropyLoss(smooth_factor=0.1),
-        "patchgan_disc" : PatchGANDiscriminatorLoss(discriminator_lr = 0.001, device=device),
+        "patchgan_disc" : PatchGANDiscriminatorLoss(discriminator_lr = 0.001, device=device, discriminator_init_weights="discriminator.pth"),
+        "patchgan_dice" : DiceDisc(discriminator_lr= 0.001, device=device, discriminator_init_weights="discriminator.pth"),
     }
 
     loss = loss_dict.get(name, None)
