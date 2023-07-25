@@ -41,6 +41,12 @@ class DiffusionAdapter(Unet):
             1, 1, self.image_size, self.image_size
         )
 
+        """
+        import matplotlib.pyplot as plt
+        plt.imshow(x[0,0].cpu().numpy())
+        plt.show()
+        """
+
         if t0_mask is not None:
             t0_features = self.time_mlp(torch.zeros_like(time))
             t0_features = t0_features[:, :, None, None].repeat(

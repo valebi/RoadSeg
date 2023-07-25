@@ -265,7 +265,7 @@ class GoogleDataset(SegmentationDataset):
                 A.augmentations.crops.transforms.RandomResizedCrop(
                     CFG.img_size,
                     CFG.img_size,
-                    scale=(0.65, 1.2),
+                    scale=(0.5, 0.9),
                     ratio=(0.9, 1.1),
                     interpolation=cv2.INTER_LINEAR,
                 ),
@@ -300,10 +300,12 @@ class OnepieceCILDataset(SegmentationDataset):
         self.max_margin = max_margin if max_margin != -1 else CFG.img_size // 2
         if self.transforms is None:
             self.max_margin = 0
-        self.train_paths = glob(
-            CFG.data_dir + "/ethz-cil-road-segmentation-2023/training/images/*.png"
+        self.train_paths = sorted(
+            glob(CFG.data_dir + "/ethz-cil-road-segmentation-2023/training/images/*.png")
         )
-        self.test_paths = glob(CFG.data_dir + "/ethz-cil-road-segmentation-2023/test/images/*.png")
+        self.test_paths = sorted(
+            glob(CFG.data_dir + "/ethz-cil-road-segmentation-2023/test/images/*.png")
+        )
         self.img_paths = self.train_paths + self.test_paths
         self.label_paths = [file.replace("images", "groundtruth") for file in self.img_paths]
         self.imgs = [io.imread(file)[:, :, :3] for file in self.img_paths]
@@ -397,7 +399,7 @@ class OnepieceCILDataset(SegmentationDataset):
         if self.add_t0_mask:
             # make sure the center (target tile) is noise (and has actual timestep)
             # and the borders are ground truth (and have timestep 0)
-            t0_mask = np.ones_like(patch[:, :, 4:])  # has shape (patch_h, patch_w, 1)
+            t0_mask = np.ones_like(patch[:, :, 4:]) * 255  # has shape (patch_h, patch_w, 1)
             t0_mask[
                 margin_x_before : margin_x_before + self.size,
                 margin_y_before : margin_y_before + self.size,
@@ -407,7 +409,7 @@ class OnepieceCILDataset(SegmentationDataset):
             patch = np.concatenate([patch, t0_mask], axis=-1)
 
         # split masks and images
-        # we have (R,G,B, loss_mask, t0_mask) = (R, G, B, LABEL, IS_LABEL_KNOWN, IS PART OF TARGET TILE)
+        # we have (R,G,B, label. loss_mask, t0_mask) = (R, G, B, LABEL, IS_LABEL_KNOWN, IS PART OF TARGET TILE)
         img, lbl = patch[:, :, :3], patch[:, :, 3:]
 
         # crop to correct size

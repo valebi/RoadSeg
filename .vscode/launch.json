@@ -50,7 +50,6 @@
                 "bce",
                 "--finetuning_loss",
                 "bce",
-                // "--no_pretrain",
                 "--onepiece",
                 "--partial_diffusion",
                 "--metrics_to_watch",

@@ -637,7 +637,7 @@ class MedSegDiff(nn.Module):
 
     def model_predictions(self, x, t, c, x_self_cond=None, clip_x_start=False):
         model_output = self.model(x, t, c, x_self_cond)
-        maybe_clip = partial(torch.clamp, min=-1.0, max=1.0) if clip_x_start else identity
+        maybe_clip = partial(torch.clamp, min=0.0, max=1.0) if clip_x_start else identity
 
         if self.objective == "pred_noise":
             pred_noise = model_output
@@ -774,6 +774,17 @@ class MedSegDiff(nn.Module):
 
         x = self.q_sample(x_start=x_start, t=t, noise=noise)
 
+        """
+        import matplotlib.pyplot as plt
+        plt.subplot(1, 3, 1)
+        plt.imshow(x_start[0, 0].cpu().numpy())
+        plt.subplot(1, 3, 2)
+        plt.imshow(t0_mask[0].cpu().numpy())
+        plt.subplot(1, 3, 3)
+        plt.imshow((
+            x * (1 - t0_mask) + (x_start * t0_mask))[0,0].cpu().numpy())
+        plt.show()"""
+
         if t0_mask is not None:
             x = x * (1 - t0_mask) + (x_start * t0_mask)
 
@@ -809,7 +820,7 @@ class MedSegDiff(nn.Module):
             raise ValueError(f"unknown objective {self.objective}")
 
         if loss_mask is not None:
-            return F.mse_loss(loss_mask * model_out, loss_mask * target)
+            return F.mse_loss(loss_mask[:, None] * model_out, loss_mask[:, None] * target)
         else:
             return F.mse_loss(model_out, target)
 
