@@ -137,8 +137,8 @@ class DiceDisc(nn.Module):
         self.disc = PatchGANDiscriminatorLoss(discriminator_lr, device, discriminator_init_weights)
         self.dice = smp_l.DiceLoss(mode="multiclass")
 
-        self.disc_weight = 0.4
-        self.dice_weight = 0.6
+        self.disc_weight = 0.2
+        self.dice_weight = 0.8
 
     def forward(self, input, label):
         return self.disc_weight * self.disc(input, label) + self.dice_weight * self.dice(input, label)
