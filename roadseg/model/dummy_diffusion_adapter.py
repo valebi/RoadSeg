@@ -29,7 +29,7 @@ class DiffusionAdapter(Unet):
             for param in child.parameters():
                 param.requires_grad = False
 
-    def forward(self, x, time, cond, x_self_cond=None):
+    def forward(self, x, time, cond, x_self_cond=None, t0_mask=None):
         """Sequentially pass `x` trough model`s encoder, decoder and heads"""
         smp_model = self.smp_model
         smp_model.check_input_shape(cond)
@@ -40,6 +40,14 @@ class DiffusionAdapter(Unet):
         time_features = time_features[:, :, None, None].repeat(
             1, 1, self.image_size, self.image_size
         )
+
+        if t0_mask is not None:
+            t0_features = self.time_mlp(torch.zeros_like(time))
+            t0_features = t0_features[:, :, None, None].repeat(
+                1, 1, self.image_size, self.image_size
+            )
+            # where t0_mask is 1, set timestep to zero, otherwise use actual time step
+            time_features = time_features * (1 - t0_mask[:, None]) + t0_features * t0_mask[:, None]
 
         # concatenate them with the diffusion input
         x = torch.cat((x, time_features), dim=1)

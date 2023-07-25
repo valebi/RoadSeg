@@ -168,6 +168,17 @@ def parse_args() -> argparse.Namespace:
         help="Decoder depth for pytorch-segmentation-models. Can only be 4 or 5. Image size must be divisible by 2^decoder_depth.",
     )
     parser.add_argument(
+        "--diffusion_timesteps",
+        type=int,
+        default=100,
+        help="Number of timesteps for diffusion models.",
+    )
+    parser.add_argument(
+        "--partial_diffusion",
+        action="store_true",
+        help="Whether to use partial labels as input to the diffusion process.",
+    )
+    parser.add_argument(
         "--smp_backbone",
         type=str,
         default="timm-regnety_080",

@@ -38,7 +38,7 @@ def train_one_epoch(
     metric_to_monitor,
     file=None,
 ):
-    n_accumulate = 2  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
+    n_accumulate = 1  # max(1, 32//CFG.train_batch_size) @TODO: what is this?
     diffusion.train()
     scaler = amp.GradScaler()
 
@@ -51,6 +51,7 @@ def train_one_epoch(
     for step, (images, labels) in pbar:
         images = images.to(device, dtype=torch.float)
         labels = labels.to(device, dtype=torch.long)
+        t0_mask = None if labels.shape[1] < 3 else labels[:, 2]
         labels, loss_mask = labels[:, 0], labels[:, 1]
 
         batch_size = images.size(0)
@@ -59,7 +60,9 @@ def train_one_epoch(
             # y_pred = model(images)
             # make labels one-hot
             onehot_labels = torch.cat([1 - labels[:, None], labels[:, None]], dim=1)
-            loss = diffusion(onehot_labels.to(torch.float32), images)
+            loss = diffusion(
+                onehot_labels.to(torch.float32), images, loss_mask=loss_mask, t0_mask=t0_mask
+            )
             # y_pred = y_pred * loss_mask[:, None]
             # loss = criterion(y_pred[:, 1], labels.float())
             loss = loss / n_accumulate
@@ -107,7 +110,7 @@ def train_one_epoch(
 def valid_one_epoch(
     diffusion, dataloader, optimizer, device, epoch, criterion, metrics_to_watch, file=None
 ):
-    # model.eval()
+    diffusion.eval()
 
     dataset_size = 0
     running_loss = 0.0
@@ -124,14 +127,13 @@ def valid_one_epoch(
     for step, (images, masks) in pbar:
         images = images.to(device, dtype=torch.float)
         masks = masks.to(device, dtype=torch.long)
+        t0_mask = None if masks.shape[1] < 3 else masks[:, 2]
         labels, loss_mask = masks[:, 0], masks[:, 1]
 
         batch_size = images.size(0)
 
         onehot_labels = torch.cat([1 - labels[:, None], labels[:, None]], dim=1)
-        loss = diffusion(onehot_labels.to(torch.float32), images)
-        # y_pred = y_pred * loss_mask[:, None]
-        # loss = criterion(y_pred[:, 1], labels.float())
+        loss = diffusion(onehot_labels.to(torch.float32), images, t0_mask=t0_mask)
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size

@@ -84,7 +84,9 @@ def build_model(CFG, num_classes):
                 model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim
             )
 
-            diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0")  # 1000
+            diffusion = MedSegDiff(
+                adapter, timesteps=CFG.diffusion_timesteps, objective="pred_x0"
+            )  # 1000
 
             if init_model and not loaded_weights:
                 # try loading the whole model

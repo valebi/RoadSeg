@@ -327,6 +327,8 @@ class OnepieceCILDataset(SegmentationDataset):
             dtype=np.int32,
         )
 
+        self.add_t0_mask = CFG.partial_diffusion
+
         self.img1, loc_dict1 = self.assemble_image(self.lookup1, CFG.img_size)
         self.img2, loc_dict2 = self.assemble_image(self.lookup2, CFG.img_size)
 
@@ -338,11 +340,18 @@ class OnepieceCILDataset(SegmentationDataset):
         if self.transforms is not None:
             self.crop = A.Compose(
                 [
-                    A.augmentations.geometric.rotate.Rotate(limit=180, p=0.75, crop_border=True),
+                    A.augmentations.geometric.transforms.PadIfNeeded(
+                        CFG.img_size + 2 * self.max_margin,
+                        CFG.img_size + 2 * self.max_margin,
+                        border_mode=cv2.BORDER_CONSTANT,
+                        value=0,
+                        mask_value=0,
+                    ),
+                    A.augmentations.geometric.rotate.Rotate(limit=180, p=0.5, crop_border=True),
                     A.augmentations.crops.transforms.RandomResizedCrop(
                         CFG.img_size,
                         CFG.img_size,
-                        scale=(0.7, 1.1),
+                        scale=(0.4, 0.6),
                         ratio=(0.9, 1.1),
                         interpolation=cv2.INTER_LINEAR,
                     ),
@@ -374,15 +383,31 @@ class OnepieceCILDataset(SegmentationDataset):
     def __getitem__(self, index):
         img_nr, (i, j) = self.loc_dict[index]
         # get available space on any side
-        margin_x = min(min(i, self.img1.shape[0] - i - 1), self.max_margin)
-        margin_y = min(min(j, self.img1.shape[1] - j - 1), self.max_margin)
+        margin_x_before = min(i, self.max_margin)
+        margin_x_after = min(self.img1.shape[0] - i - 1, self.max_margin)
+        margin_y_before = min(j, self.max_margin)
+        margin_y_after = min(self.img1.shape[1] - j - 1, self.max_margin)
         # cut out (potentially bigger) patch around original location
         _img = self.img1 if img_nr == 1 else self.img2
         patch = _img[
-            i - margin_x : i + margin_x + self.size, j - margin_y : j + margin_y + self.size
+            i - margin_x_before : i + margin_x_after + self.size,
+            j - margin_y_before : j + margin_y_after + self.size,
         ]
 
+        if self.add_t0_mask:
+            # make sure the center (target tile) is noise (and has actual timestep)
+            # and the borders are ground truth (and have timestep 0)
+            t0_mask = np.ones_like(patch[:, :, 4:])  # has shape (patch_h, patch_w, 1)
+            t0_mask[
+                margin_x_before : margin_x_before + self.size,
+                margin_y_before : margin_y_before + self.size,
+            ] = 0
+            # if we don't know the label we want noise not maximal certainty
+            t0_mask[patch[:, :, 4:5] == 0] = 0
+            patch = np.concatenate([patch, t0_mask], axis=-1)
+
         # split masks and images
+        # we have (R,G,B, loss_mask, t0_mask) = (R, G, B, LABEL, IS_LABEL_KNOWN, IS PART OF TARGET TILE)
         img, lbl = patch[:, :, :3], patch[:, :, 3:]
 
         # crop to correct size
@@ -397,18 +422,19 @@ class OnepieceCILDataset(SegmentationDataset):
             torch.tensor(lbl), 0, 2
         )
 
-        """
         print(img.shape, lbl.shape)
         import matplotlib.pyplot as plt
 
-        plt.subplot(1, 3, 1)
+        plt.subplot(1, 4, 1)
         plt.imshow(img.permute(1, 2, 0))
-        plt.subplot(1, 3, 2)
+        plt.subplot(1, 4, 2)
         plt.imshow(lbl.permute(1, 2, 0)[:, :, 0])
-        plt.subplot(1, 3, 3)
+        plt.subplot(1, 4, 3)
         plt.imshow(lbl.permute(1, 2, 0)[:, :, 1])
+        if self.add_t0_mask:
+            plt.subplot(1, 4, 4)
+            plt.imshow(lbl.permute(1, 2, 0)[:, :, 2])
         plt.show()
-        """
 
         return (
             img / 255,
