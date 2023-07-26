@@ -280,11 +280,19 @@ class GoogleDataset(SegmentationDataset):
 
 class OnepieceCILDataset(SegmentationDataset):
     def assemble_image(self, lookup, size):
+        #print("lookup table")
+        #print(lookup)
+        #print("size")
+        #print(size)
+
+        #12 * 400 What is 5 ?
         shape = (lookup.shape[0] * size, lookup.shape[1] * size, 5)
         full_img = np.zeros(shape, dtype=np.uint8)
         loc_dict = {}
         for i in range(lookup.shape[0]):
             for j in range(lookup.shape[1]):
+                #print(len(self.imgs))
+                #print(lookup[i,j])
                 loc_dict[lookup[i, j]] = (i * size, j * size)
                 full_img[i * size : (i + 1) * size, j * size : (j + 1) * size, :3] = (
                     resize(self.imgs[lookup[i, j]], (size, size)) * 255
@@ -295,17 +303,22 @@ class OnepieceCILDataset(SegmentationDataset):
         return full_img, loc_dict
 
     def __init__(self, CFG, transforms=None, max_samples=-1, max_margin=-1):
+        print("Initializing OnepieceCILDataset")
         super().__init__(transforms, max_samples)
         self.size = CFG.img_size
         self.max_margin = max_margin if max_margin != -1 else CFG.img_size // 2
         if self.transforms is None:
             self.max_margin = 0
-        self.train_paths = glob(
-            CFG.data_dir + "/ethz-cil-road-segmentation-2023/training/images/*.png"
-        )
-        self.test_paths = glob(CFG.data_dir + "/ethz-cil-road-segmentation-2023/test/images/*.png")
+        self.train_paths = sorted(glob(CFG.data_dir + "/ethz-cil-road-segmentation-2023/training/images/*.png"))
+        self.test_paths = sorted(glob(CFG.data_dir + "/ethz-cil-road-segmentation-2023/test/images/*.png"))
+
         self.img_paths = self.train_paths + self.test_paths
+        #print(self.img_paths)
         self.label_paths = [file.replace("images", "groundtruth") for file in self.img_paths]
+
+        #print(self.train_paths)
+        #print(self.test_paths)
+
         self.imgs = [io.imread(file)[:, :, :3] for file in self.img_paths]
         self.labels = [io.imread(f) if os.path.isfile(f) else None for f in self.label_paths]
         # extend with loss masks
@@ -317,12 +330,12 @@ class OnepieceCILDataset(SegmentationDataset):
         ]
 
         self.lookup1 = np.loadtxt(
-            "roadseg/utils/img1.csv",
+            "/home/ahmet/Documents/CIL Project/RoadSeg/roadseg/utils/img1.csv",
             delimiter=",",
             dtype=np.int32,
         )
         self.lookup2 = np.loadtxt(
-            "roadseg/utils/img2.csv",
+            "/home/ahmet/Documents/CIL Project/RoadSeg/roadseg/utils/img2.csv",
             delimiter=",",
             dtype=np.int32,
         )
@@ -349,7 +362,10 @@ class OnepieceCILDataset(SegmentationDataset):
                 ],
                 p=1,
             )
-        """
+
+        print("Initialization is done")
+
+    '''
         import matplotlib.pyplot as plt
         plt.figure(figsize=(50,50))
         plt.subplot(2, 3, 1)
@@ -366,7 +382,7 @@ class OnepieceCILDataset(SegmentationDataset):
         plt.imshow(self.img2[:,:,4])
         plt.tight_layout()
         plt.show()
-        """
+    '''
 
     def __len__(self):
         return len(self.train_paths)
@@ -397,7 +413,7 @@ class OnepieceCILDataset(SegmentationDataset):
             torch.tensor(lbl), 0, 2
         )
 
-        """
+
         print(img.shape, lbl.shape)
         import matplotlib.pyplot as plt
 
@@ -408,7 +424,7 @@ class OnepieceCILDataset(SegmentationDataset):
         plt.subplot(1, 3, 3)
         plt.imshow(lbl.permute(1, 2, 0)[:, :, 1])
         plt.show()
-        """
+
 
         return (
             img / 255,
