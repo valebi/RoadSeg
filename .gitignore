@@ -3,8 +3,8 @@ RoadSegmentation.code-workspace
 
 # logs
 logs/
-
-# data
+local_run.sh
+data
 #data/
 output/
 submission.csv 

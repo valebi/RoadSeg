@@ -14,7 +14,7 @@ from roadseg.train_single_ds import evaluate_finetuning, pretrain_model
 from roadseg.utils.augmentations import get_albumentations
 from roadseg.utils.plots import plot_batch
 from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
-
+#import torch
 
 def main(CFG: Namespace):
     """Main function."""
@@ -54,6 +54,8 @@ def main(CFG: Namespace):
         logging.info(f"Training on {len(train_loader)*CFG.train_batch_size} samples")  
         model = pretrain_model(CFG, model, train_loader, val_loader)
         gc.collect() ##Might be useful to garbage collect before we start fine tuning
+
+    #torch.cuda.empty_cache()
 
     logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
     avg_score = evaluate_finetuning(model, test_splits, CFG)
