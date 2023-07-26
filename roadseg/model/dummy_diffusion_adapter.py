@@ -82,16 +82,20 @@ class DiffusionAdapter(nn.Module):
         diffusion_features = self.diffusion_encoder(x)
 
         # add it! (leave first one, it is the image itself)
-        """
-        features = encoder_features[:1] + [
-            torch.cat([encoder_features[i], torch.nn.functional.relu(diffusion_features[i])], dim=1) for i in range(1, len(encoder_features))
-        ]
-        features = features[:1] + [self.combination_convs[i](features[i]) for i in range(1, len(features))]
-        """
-        features = encoder_features[:1] + [
-            nn.functional.relu(diffusion_features[i]) + encoder_features[i]
-            for i in range(1, len(diffusion_features))
-        ]
+        combine_conv = False
+        if combine_conv:
+            features = encoder_features[:1] + [
+                torch.cat([encoder_features[i], diffusion_features[i]], dim=1)
+                for i in range(1, len(encoder_features))
+            ]
+            features = features[:1] + [
+                self.combination_convs[i](features[i]) for i in range(1, len(features))
+            ]
+        else:
+            features = encoder_features[:1] + [
+                nn.functional.relu(diffusion_features[i]) + encoder_features[i]
+                for i in range(1, len(diffusion_features))
+            ]
         decoder_output = smp_model.decoder(*features)
 
         masks = smp_model.segmentation_head(decoder_output)
