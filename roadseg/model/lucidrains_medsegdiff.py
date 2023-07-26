@@ -663,7 +663,7 @@ class MedSegDiff(nn.Module):
         x_start = preds.pred_x_start
 
         if clip_denoised:
-            x_start.clamp_(-1.0, 1.0)
+            x_start.clamp_(0.0, 1.0)
 
         model_mean, posterior_variance, posterior_log_variance = self.q_posterior(
             x_start=x_start, x_t=x, t=t
@@ -677,7 +677,8 @@ class MedSegDiff(nn.Module):
         model_mean, _, model_log_variance, x_start = self.p_mean_variance(
             x=x, t=batched_times, c=c, x_self_cond=x_self_cond, clip_denoised=clip_denoised
         )
-        noise = torch.randn_like(x) if t > 0 else 0.0  # no noise if t == 0
+        noise = 0.5 + 0.5 * torch.randn_like(x) if t > 0 else 0.5  # no noise if t == 0
+
         pred_img = model_mean + (0.5 * model_log_variance).exp() * noise
         return pred_img, x_start
 
@@ -686,6 +687,8 @@ class MedSegDiff(nn.Module):
         batch, device = shape[0], self.betas.device
 
         img = torch.randn(shape, device=device)
+        img = 0.5 + 0.5 * img  # shift to 0.5-centered distribution
+        img = torch.clamp(img, min=0.0, max=1.0)  # clamp to [0,1]
 
         x_start = None
 
@@ -720,6 +723,8 @@ class MedSegDiff(nn.Module):
         )  # [(T-1, T-2), (T-2, T-3), ..., (1, 0), (0, -1)]
 
         img = torch.randn(shape, device=device)
+        img = 0.5 + 0.5 * img  # shift to 0.5-centered distribution
+        img = torch.clamp(img, min=0.0, max=1.0)  # clamp to [0,1]
 
         x_start = None
 
@@ -741,6 +746,8 @@ class MedSegDiff(nn.Module):
             c = (1 - alpha_next - sigma**2).sqrt()
 
             noise = torch.randn_like(img)
+            noise = 0.5 + 0.5 * noise  # shift to 0.5-centered distribution
+            noise = torch.clamp(noise, min=0.0, max=1.0)  # clamp to [0,1]
 
             img = x_start * alpha_next.sqrt() + c * pred_noise + sigma * noise
 
@@ -758,7 +765,8 @@ class MedSegDiff(nn.Module):
 
     def q_sample(self, x_start, t, noise=None):
         noise = default(noise, lambda: torch.randn_like(x_start))
-
+        noise = 0.5 + 0.5 * noise  # shift to 0.5-centered distribution
+        noise = torch.clamp(noise, min=0.0, max=1.0)  # clamp to [0,1]
         return (
             extract(self.sqrt_alphas_cumprod, t, x_start.shape) * x_start
             + extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape) * noise
@@ -799,12 +807,10 @@ class MedSegDiff(nn.Module):
         # if doing self-conditioning, 50% of the time, predict x_start from current set of times
         # and condition with unet with that
         # this technique will slow down training by 25%, but seems to lower FID significantly
-
         x_self_cond = None
         if self.self_condition and random() < 0.5:
             with torch.no_grad():
                 # predicting x_0
-
                 x_self_cond = self.model_predictions(x, t, cond).pred_x_start
                 x_self_cond.detach_()
 

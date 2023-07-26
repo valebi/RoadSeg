@@ -93,7 +93,7 @@ def build_model(CFG, num_classes):
                 diffusion = try_load_weights(diffusion, init_model, device=CFG.device)
                 logging.info(f"Loaded weights of ENTIRE MODEL")
 
-            diffusion = diffusion.to(CFG.device)
+            # diffusion = diffusion.to(CFG.device)
             # diffusion = nn.DataParallel(diffusion)
             return diffusion
         else:
@@ -149,7 +149,7 @@ def build_model(CFG, num_classes):
     if CFG.initial_model and not CFG.use_diffusion:
         model = try_load_weights(model, CFG.initial_model, device=CFG.device)
 
-    model.to(CFG.device)
+    # model.to(CFG.device)
     # model = nn.DataParallel(model)
     return model
 

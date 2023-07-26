@@ -6,9 +6,9 @@ from torch import nn
 from roadseg.model.lucidrains_medsegdiff import SinusoidalPosEmb, Unet
 
 
-class DiffusionAdapter(Unet):
+class DiffusionAdapter(nn.Module):
     def __init__(self, smp_model, diffusion_encoder, img_size, dim=64):
-        super().__init__(dim=64, image_size=img_size)
+        super().__init__()
         self.smp_model = smp_model
         self.diffusion_encoder = diffusion_encoder
         self.input_img_channels = 3
@@ -22,7 +22,7 @@ class DiffusionAdapter(Unet):
             nn.GELU(),
             nn.Linear(dim, dim),
         )
-        self._freeze(self.smp_model.encoder)
+        self._freeze(self.smp_model)
 
     def _freeze(self, module):
         for child in module.children():
@@ -48,6 +48,7 @@ class DiffusionAdapter(Unet):
         """
 
         if t0_mask is not None:
+            # @TODO: use loss mask aswell (set to t_max, add argument)
             t0_features = self.time_mlp(torch.zeros_like(time))
             t0_features = t0_features[:, :, None, None].repeat(
                 1, 1, self.image_size, self.image_size
@@ -63,7 +64,7 @@ class DiffusionAdapter(Unet):
 
         # add it! (leave first one, it is the image itself)
         features = encoder_features[:1] + [
-            encoder_features[i] + 0 * diffusion_features[i] for i in range(1, len(encoder_features))
+            encoder_features[i] + diffusion_features[i] for i in range(1, len(encoder_features))
         ]
         decoder_output = smp_model.decoder(*features)
 
