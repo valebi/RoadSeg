@@ -4,6 +4,8 @@ RoadSegmentation.code-workspace
 # logs
 logs/
 
+data
+data/
 data/*
 data/google-roadseg
 data/ethz-cil-road-segmentation-2023

@@ -78,16 +78,17 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
     onePieceData = OnepieceCILDataset(CFG)
     big_image_shape = onePieceData.img1.shape
 
-    output_image = np.full(big_image_shape[:2], np.nan)
 
     if run_inf:
         print("starting to generate predictions")
         averagedLabels = []
         for bigImage in [onePieceData.img1, onePieceData.img2]:
             print("big Image")
-            big_labels = []
-            for initial_shift_x in range(0, CFG.img_size, 70):
-                for initial_shift_y in range(0, CFG.img_size, 70):
+            output_image = np.full(big_image_shape[:2], np.nan)
+            valid_entries = np.zeros(big_image_shape[:2])
+
+            for initial_shift_x in range(0, CFG.img_size, 1):
+                for initial_shift_y in range(0, CFG.img_size, 1):
                     #get the shifted patches from the test images
                     patches, positions = get_image_patches(bigImage[:,:,:3], CFG.img_size, initial_shift_x, initial_shift_y)
                     print("patches are generated")
@@ -95,11 +96,15 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
                     # turn it into a torch tensor and predict the outcome
                     patch_labels = run_inference(patches, CFG, model, road_class=1, fold="")
                     print("patch labels are generated")
-                    big_labels.append(assemble_image(patch_labels, positions, big_image_shape[:2]))
+
+                    assembled_img = assemble_image(patch_labels, positions, big_image_shape[:2])
+                    output_image = np.where(np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img))
+                    valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
+
                     print(f"assembled image and appended to big labels, shift_x : {initial_shift_x}, shift_y : {initial_shift_y}")
-            big_labels_array = np.stack(big_labels)
+            output_image = output_image / valid_entries
             # take the average to get labels for the images
-            averagedLabels.append(np.nanmean(big_labels_array, axis=0))
+            averagedLabels.append(output_image)
             print("averaged labels are generated")
         # save the labels
         with open(os.path.join("/home/ahmet/Documents/RoadSeg/", "averagedLabels.pkl"), "wb") as f:
@@ -135,7 +140,7 @@ def main(CFG: Namespace):
     CFG.device = "cuda:0"
     CFG.train_batch_size = 32
     CFG.val_batch_size = 64
-
+    CFG.experiment_name = "TTA-shift=1"
 
     for fold in range(5):
         CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
@@ -144,9 +149,11 @@ def main(CFG: Namespace):
 
     print_average_labels()
     make_ensemble(CFG)
-    #make_submission(CFG)
+
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
     masks_to_submission(CFG.submission_file, "", *image_filenames)
+
+    make_submission(CFG)
 
 if __name__ == "__main__":
     args = setup()
