@@ -1,40 +1,27 @@
-import datetime
-import gc
-import logging
-import pathlib
-import time
 from argparse import Namespace
-
-import glob
-import logging
 import os
 
-import numpy as np
 import PIL
 import torch
 from PIL import Image
 import pickle
+
+from roadseg.inference_diffusion import make_ensemble, make_submission
+from roadseg.model.smp_models import build_model
+from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
+from roadseg.datasets.SegmentationDatasets import OnepieceCILDataset
+import numpy as np
+
+import glob
+
+import numpy as np
+
 from roadseg.utils.mask_to_submission import (
     mask_to_submission_strings,
     masks_to_submission,
     save_mask_as_img,
 )
 
-from torch import nn
-from torchsummary import summary
-
-from roadseg.datasets.dataloaders import get_dataloaders
-from roadseg.inference_diffusion import make_ensemble, make_submission
-from roadseg.model.smp_models import build_model
-from roadseg.train_single_ds_diffusion import evaluate_finetuning, pretrain_model
-from roadseg.utils.augmentations import get_albumentations
-from roadseg.utils.plots import plot_batch
-from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
-
-from roadseg.datasets.SegmentationDatasets import OnepieceCILDataset
-
-import cv2
-import numpy as np
 
 def get_image_patches(image, patch_size, initial_shift_x, initial_shift_y):
     height, width = image.shape[:2]
@@ -60,7 +47,6 @@ def assemble_image(patches, patch_positions, output_shape):
         end_y = start_y + patch.shape[0]
         end_x = start_x + patch.shape[1]
         output_image[start_y:end_y, start_x:end_x] = patch
-
     return output_image
 
 def run_inference(imgs, CFG, model, road_class=1, fold=""):
@@ -92,14 +78,16 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
     onePieceData = OnepieceCILDataset(CFG)
     big_image_shape = onePieceData.img1.shape
 
+    output_image = np.full(big_image_shape[:2], np.nan)
+
     if run_inf:
         print("starting to generate predictions")
         averagedLabels = []
         for bigImage in [onePieceData.img1, onePieceData.img2]:
             print("big Image")
             big_labels = []
-            for initial_shift_x in range(0, CFG.img_size, 50):
-                for initial_shift_y in range(0, CFG.img_size, 50):
+            for initial_shift_x in range(0, CFG.img_size, 70):
+                for initial_shift_y in range(0, CFG.img_size, 70):
                     #get the shifted patches from the test images
                     patches, positions = get_image_patches(bigImage[:,:,:3], CFG.img_size, initial_shift_x, initial_shift_y)
                     print("patches are generated")
@@ -108,20 +96,19 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
                     patch_labels = run_inference(patches, CFG, model, road_class=1, fold="")
                     print("patch labels are generated")
                     big_labels.append(assemble_image(patch_labels, positions, big_image_shape[:2]))
-                    print("assembled image and appended to big labels")
+                    print(f"assembled image and appended to big labels, shift_x : {initial_shift_x}, shift_y : {initial_shift_y}")
             big_labels_array = np.stack(big_labels)
             # take the average to get labels for the images
             averagedLabels.append(np.nanmean(big_labels_array, axis=0))
             print("averaged labels are generated")
         # save the labels
-        with open(os.path.join("/home/ahmet/Documents/CIL Project/RoadSeg/", "averagedLabels.pkl"), "wb") as f:
+        with open(os.path.join("/home/ahmet/Documents/RoadSeg/", "averagedLabels.pkl"), "wb") as f:
             pickle.dump(averagedLabels, f)
     else:
-        with open(os.path.join("/home/ahmet/Documents/CIL Project/RoadSeg/", "averagedLabels.pkl"), "rb") as f:
+        with open(os.path.join("/home/ahmet/Documents/RoadSeg/", "averagedLabels.pkl"), "rb") as f:
             averagedLabels = pickle.load(f)
 
-    img_files = [f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")]
-    num_images = len(img_files)
+    img_files = sorted([f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")])
     for index , img_file in enumerate(img_files):
         # Add 144 to get the test image labels
         print("image number: ", index)
@@ -132,32 +119,34 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
         img.save(os.path.join(dirname, img_file))
 
 def print_average_labels():
-    with open(os.path.join("/home/ahmet/Documents/CIL Project/RoadSeg/", "averagedLabels.pkl"), "rb") as f:
+    with open(os.path.join("/home/ahmet/Documents/RoadSeg/", "averagedLabels.pkl"), "rb") as f:
         averagedLabels = pickle.load(f)
     for i in range(2):
         img = PIL.Image.fromarray(averagedLabels[i].astype(np.uint8))
-        img.save(os.path.join("/home/ahmet/Documents/CIL Project/RoadSeg/output/avLabels", f"averagedLabels{i}.png"))
+        img.save(os.path.join("/home/ahmet/Documents/RoadSeg/output/avLabels", f"averagedLabels{i}.png"))
 
 def main(CFG: Namespace):
     """Main function."""
-    CFG.out_dir = "/home/ahmet/Documents/CIL Project/RoadSeg/output"
-    CFG.test_imgs_dir = "/home/ahmet/Documents/CIL Project/RoadSeg/data/ethz-cil-road-segmentation-2023/test/images"
-    CFG.data_dir = "/home/ahmet/Documents/CIL Project/RoadSeg/data"
+    CFG.out_dir = "/home/ahmet/Documents/RoadSeg/output"
+    CFG.test_imgs_dir = "/home/ahmet/Documents/RoadSeg/data/ethz-cil-road-segmentation-2023/test/images"
+    CFG.data_dir = "/home/ahmet/Documents/RoadSeg/data"
     CFG.smp_backbone = "timm-regnety_080"
     CFG.smp_model = "Unet"
     CFG.device = "cuda:0"
-    CFG.train_batch_size = 8
-    CFG.val_batch_size = 16
+    CFG.train_batch_size = 32
+    CFG.val_batch_size = 64
 
-    model = build_model(CFG, num_classes=2)
+
     for fold in range(5):
-        CFG.initial_model = f"/home/ahmet/Documents/CIL Project/Unet_timm-regnety_080_BGHER-big-regnety-150pre-dice-50ft-dice-finetuning__2023-07-20_01-30-24/scratch_logs/2023-07-20_01-30-24/weights/best_epoch-finetune-fold-{fold}.bin"
+        CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
+        model = build_model(CFG, num_classes=2)
         generate_predictions(model, CFG, road_class=1, fold=fold, run_inf=True)
 
     print_average_labels()
     make_ensemble(CFG)
-    make_submission(CFG)
-
+    #make_submission(CFG)
+    image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
+    masks_to_submission(CFG.submission_file, "", *image_filenames)
 
 if __name__ == "__main__":
     args = setup()
