@@ -72,7 +72,7 @@ def build_model(CFG, num_classes):
                     model = _copy
 
             CFG.use_diffusion = True
-            time_dim = 32
+            time_dim = 1
             diffusion_encoder = get_encoder(
                 CFG.smp_backbone,
                 in_channels=time_dim + 2,
@@ -81,7 +81,11 @@ def build_model(CFG, num_classes):
                 output_stride=model.encoder.output_stride,
             )
             adapter = DiffusionAdapter(
-                model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim
+                model,
+                diffusion_encoder,
+                img_size=CFG.img_size,
+                dim=time_dim,
+                timesteps=CFG.diffusion_timesteps,
             )
 
             diffusion = MedSegDiff(

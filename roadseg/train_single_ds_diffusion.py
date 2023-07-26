@@ -292,7 +292,11 @@ def run_training(
     # load best model weights
     model.load_state_dict(best_model_wts)
 
-    small_valid_loader = [d for i, d in enumerate(valid_loader) if i < 2]  # two batches at most
+    small_valid_loader = (
+        list(valid_loader)
+        if "finetune" in model_name
+        else [d for i, d in enumerate(valid_loader) if i < 2]
+    )  # two batches at most
     y_pred = pred_from_dataloader(model, small_valid_loader, device=device, num_ensemble=1)
     imgs = torch.cat([img for img, _ in small_valid_loader], axis=0)
     labels = torch.cat([labels[:, 0] for _, labels in small_valid_loader], axis=0)

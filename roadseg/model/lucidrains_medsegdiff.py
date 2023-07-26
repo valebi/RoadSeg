@@ -510,6 +510,11 @@ def cosine_beta_schedule(timesteps, s=0.008):
     return torch.clip(betas, 0, 0.999)
 
 
+import segmentation_models_pytorch as smp
+
+dice_loss = smp.losses.DiceLoss(mode="multiclass")
+
+
 class MedSegDiff(nn.Module):
     def __init__(
         self,
@@ -822,7 +827,9 @@ class MedSegDiff(nn.Module):
             target = noise
         elif self.objective == "pred_x0":
             target = x_start
-            model_out = torch.nn.functional.softmax(model_out, dim=1)
+            # model_out = torch.nn.functional.softmax(model_out, dim=1)
+            # @TODO make this less ugly
+            return dice_loss(model_out, x_start[:, 1].long())
             # return F.binary_cross_entropy_with_logits(model_out, x_start, weight=loss_mask)
         elif self.objective == "pred_v":
             raise NotImplementedError(

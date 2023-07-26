@@ -166,13 +166,20 @@ class CIL23Dataset(SegmentationDataset):
             CFG.data_dir + "/ethz-cil-road-segmentation-2023/training/images/*.png"
         )
         self.lbl_paths = [f.replace("images", "groundtruth") for f in self.img_paths]
-        if transforms is not None or CFG.img_size != 400:
+        if transforms is not None:
             self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
                 CFG.img_size,
                 CFG.img_size,
                 scale=(0.85, 1.15),
                 ratio=(0.9, 1.1),
                 interpolation=cv2.INTER_LINEAR,
+            )
+        elif CFG.img_size != 400:
+            self.crop = A.augmentations.geometric.resize.Resize(
+                CFG.img_size,
+                CFG.img_size,
+                interpolation=cv2.INTER_LINEAR,
+                always_apply=True,
             )
         self._ensure_size()
 
