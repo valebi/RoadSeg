@@ -58,7 +58,7 @@ def train_one_epoch(
         with amp.autocast(enabled=True):
             y_pred = model(images)
             y_pred = y_pred * loss_mask[:, None]
-            loss = criterion(y_pred[:, 1], labels.float())
+            loss = criterion(y_pred, labels)
             loss = loss / n_accumulate
 
         scaler.scale(loss).backward()
@@ -127,7 +127,7 @@ def valid_one_epoch(
 
         y_pred = model(images)
         y_pred = y_pred * loss_mask[:, None]
-        loss = criterion(y_pred[:, 1], labels.float())
+        loss = criterion(y_pred, labels)
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
