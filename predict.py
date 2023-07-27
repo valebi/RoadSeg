@@ -102,14 +102,19 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
     os.makedirs(dirname, exist_ok=True)
     print("tta directory is created")
 
+
     # print(big_image_shape)
-    #onePieceData = OnepieceCILDataset(CFG)
-    #save onepieceData to pickle
-    #with open('onePieceData.pickle', 'wb') as f:
-    #    pickle.dump(onePieceData, f)
-    #load onepieceData from pickle
-    with open('onePieceData.pickle', 'rb') as f:
-        onePieceData = pickle.load(f)
+    if os.path.isfile("onePieceData.pickle"):
+        # load onepieceData from pickle
+        with open('onePieceData.pickle', 'rb') as f:
+            onePieceData = pickle.load(f)
+    else:
+        print("The file does not exist")
+        onePieceData = OnepieceCILDataset(CFG)
+        # save onepieceData to pickle
+        with open('onePieceData.pickle', 'wb') as f:
+            pickle.dump(onePieceData, f)
+
 
     big_image_shape = onePieceData.img1.shape
 
