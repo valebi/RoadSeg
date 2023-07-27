@@ -4,6 +4,7 @@ RoadSegmentation.code-workspace
 # logs
 logs/
 
+onePieceData.pickle
 data
 data/
 data/*
