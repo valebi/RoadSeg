@@ -348,7 +348,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             scheduler,
             train_loader,
             val_loader,
-            criterion=get_loss(CFG.finetuning_loss),
+            criterion=get_loss(CFG.finetuning_loss, device= CFG.device),
             device=CFG.device,
             use_wandb=CFG.wandb,
             log_dir=CFG.log_dir,
