@@ -171,13 +171,13 @@ def print_average_labels():
 
 def main(CFG: Namespace):
     """Main function."""
-    CFG.out_dir = "/output"
+    CFG.out_dir = "output"
     CFG.test_imgs_dir = "/cluster/scratch/oahmet/roadseg/ethz-cil-road-segmentation-2023/test/images"
     CFG.data_dir = "/cluster/scratch/oahmet/roadseg"
     CFG.log_dir = "/cluster/scratch/oahmet/roadseg/logs"
     CFG.smp_backbone = "timm-regnety_320"
     CFG.smp_model = "DeepLabV3+"
-    CFG.device = "cuda:0"
+    CFG.device = "cuda"
     CFG.train_batch_size = 32
     CFG.val_batch_size = 64
     CFG.experiment_name = "DeepLabV3+-continued-TTA"
