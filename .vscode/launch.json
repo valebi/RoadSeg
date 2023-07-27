@@ -21,6 +21,7 @@
                 //"--initial_model",
                 //"logs/onat-last_epoch-pretrain.bin",
                 //"--use_diffusion",
+                "--onepiece",
                 "--decoder_depth",
                 "4",
                 "--train_batch_size",
