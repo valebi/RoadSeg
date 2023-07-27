@@ -7,13 +7,13 @@ COMMAND="python predict.py"
 
 echo "${COMMAND}"
 sbatch \
-    --time=12:00:00 \
+    --time=6:00:00 \
     --nodes=1 \
     --ntasks=1 \
     --cpus-per-task=20 \
     -J "roadseg-train" \
     --mem-per-cpu=10000 \
-    --gres=gpumem:8000m \
+    --gres=gpumem:15200m \
     --gpus=1 \
     --mail-type=ALL \
     --mail-user="${USER}@ethz.ch" \
