@@ -7,28 +7,20 @@
             "program": "${workspaceFolder}/main.py",
             "justMyCode": false,
             "args": [
-<<<<<<< HEAD
                 // "--log_to_file",
-=======
->>>>>>> valentin-dev
                 "--experiment_tag",
                 "local_debug",
                 "--device",
                 "cpu",
                 "--smp_backbone",
                 "efficientnet-b5",
-<<<<<<< HEAD
                 "--smp_encoder_init_weights",
                 "imagenet",
                 "--smp_model",
                 "Unet",
                 //"--initial_model",
                 //"logs/onat-last_epoch-pretrain.bin",
-                "--use_diffusion",
-=======
-                "--smp_model",
-                "Unet",
->>>>>>> valentin-dev
+                //"--use_diffusion",
                 "--decoder_depth",
                 "4",
                 "--train_batch_size",
@@ -36,22 +28,14 @@
                 "--val_batch_size",
                 "2",
                 "--datasets",
-<<<<<<< HEAD
-                "google",
-=======
                 "bing-clean",
->>>>>>> valentin-dev
                 "--max_per_dataset",
                 "10",
                 "--make_submission",
                 "--num_workers",
                 "2",
                 "--img_size",
-<<<<<<< HEAD
                 "416",
-=======
-                "400",
->>>>>>> valentin-dev
                 "--n_finetuning_folds",
                 "2",
                 "--finetuning_epochs",
@@ -59,7 +43,6 @@
                 "--pretraining_epochs",
                 "20",
                 "--scheduler",
-<<<<<<< HEAD
                 "cosine_warm_restarts",
                 "--decoder_depth",
                 "5",
@@ -68,15 +51,6 @@
                 "--finetuning_loss",
                 "bce",
                 "--no_pretrain",
-=======
-                "exponential",
-                "--scheduler_warmup_iters",
-                "10",
-                "--pretraining_loss",
-                "bce",
-                "--finetuning_loss",
-                "patch_f1",
->>>>>>> valentin-dev
                 "--metrics_to_watch",
                 "f1",
                 "compf1",
