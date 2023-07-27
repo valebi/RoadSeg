@@ -7,16 +7,15 @@ COMMAND="python predict.py"
 
 echo "${COMMAND}"
 sbatch \
-  --time=12:00:00 \
-  --nodes=1 \
-  --ntasks=1 \
-  --cpus-per-task=20 \
-  -J "roadseg-train" \
-  --mem-per-cpu=10000 \
-  --gpus=0 \
-  --mail-type=ALL \
-  --mail-user="${USER}@ethz.ch" \
-  --output="logs/last_run.txt" \
-  --wrap="${COMMAND}"
-
-# --gres=gpumem:23240m \
+    --time=12:00:00 \
+    --nodes=1 \
+    --ntasks=1 \
+    --cpus-per-task=20 \
+    -J "roadseg-train" \
+    --mem-per-cpu=10000 \
+    --gres=gpumem:23240m \
+    --gpus=0 \
+    --mail-type=ALL \
+    --mail-user="${USER}@ethz.ch" \
+    --output="logs/last_run.txt" \
+    --wrap="${COMMAND}"
