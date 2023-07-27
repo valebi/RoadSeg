@@ -13,8 +13,8 @@ sbatch \
     --cpus-per-task=20 \
     -J "roadseg-train" \
     --mem-per-cpu=10000 \
-    --gres=gpumem:23240m \
-    --gpus=1 \
+    #--gres=gpumem:23240m \
+    --gpus=0 \
     --mail-type=ALL \
     --mail-user="${USER}@ethz.ch" \
     --output="logs/last_run.txt" \
