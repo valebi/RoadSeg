@@ -813,15 +813,21 @@ class MedSegDiff(nn.Module):
         # and condition with unet with that
         # this technique will slow down training by 25%, but seems to lower FID significantly
         x_self_cond = None
-        if self.self_condition and random() < 0.5:
+        if (self.self_condition) and random() < 0.5:
             with torch.no_grad():
                 # predicting x_0
-                x_self_cond = self.model_predictions(x, t, cond).pred_x_start
+                x_self_cond = self.model(x, t, cond, x_self_cond=None, t0_mask=t0_mask)
                 x_self_cond.detach_()
+                x = self.q_sample(x_start=x_self_cond, t=t, noise=noise)
 
         # predict and take gradient step
+        """
+        import matplotlib.pyplot as plt
+        plt.imshow(x[0, 0].cpu().numpy())
+        plt.show()
+        """
 
-        model_out = self.model(x, t, cond, x_self_cond, t0_mask=t0_mask)
+        model_out = self.model(x, t, cond, x_self_cond=None, t0_mask=t0_mask)
 
         if self.objective == "pred_noise":
             target = noise

@@ -7,13 +7,15 @@ from roadseg.model.lucidrains_medsegdiff import SinusoidalPosEmb, Unet
 
 
 class DiffusionAdapter(nn.Module):
-    def __init__(self, smp_model, diffusion_encoder, img_size, timesteps, dim=64):
+    def __init__(
+        self, smp_model, diffusion_encoder, img_size, timesteps, dim=64, self_condition=False
+    ):
         super().__init__()
         self.smp_model = smp_model
         self.diffusion_encoder = diffusion_encoder
         self.input_img_channels = 3
         self.mask_channels = 2
-        self.self_condition = False
+        self.self_condition = self_condition
         self.image_size = img_size
         self.skip_connect_condition_fmaps = None
         self.timesteps = timesteps
@@ -35,12 +37,13 @@ class DiffusionAdapter(nn.Module):
 
     def forward(self, x, time, cond, x_self_cond=None, t0_mask=None):
         """Sequentially pass `x` trough model`s encoder, decoder and heads"""
+
         smp_model = self.smp_model
         smp_model.check_input_shape(cond)
         encoder_features = smp_model.encoder(cond)
 
         # generate features from diffusion input and timestep
-        """
+
         time_features = self.time_mlp(time)
         time_features = time_features[:, :, None, None].repeat(
             1, 1, self.image_size, self.image_size
@@ -49,7 +52,7 @@ class DiffusionAdapter(nn.Module):
         time_features = (
             time[:, None, None, None].repeat(1, 1, self.image_size, self.image_size)
             / self.timesteps
-        )
+        )"""
 
         """
         import matplotlib.pyplot as plt
@@ -59,14 +62,12 @@ class DiffusionAdapter(nn.Module):
 
         if t0_mask is not None:
             # @TODO: use loss mask aswell (set to t_max, add argument)
-            """
             t0_features = self.time_mlp(torch.zeros_like(time))
             t0_features = t0_features[:, :, None, None].repeat(
                 1, 1, self.image_size, self.image_size
             )
-            """
             # where t0_mask is 1, set timestep to zero, otherwise use actual time step
-            t0_features = torch.zeros_like(time_features)
+            # t0_features = torch.zeros_like(time_features)
             time_features = time_features * (1 - t0_mask[:, None]) + t0_features * t0_mask[:, None]
 
         # concatenate them with the diffusion input
@@ -93,7 +94,7 @@ class DiffusionAdapter(nn.Module):
             ]
         else:
             features = encoder_features[:1] + [
-                nn.functional.relu(diffusion_features[i]) + encoder_features[i]
+                diffusion_features[i] + encoder_features[i]
                 for i in range(1, len(diffusion_features))
             ]
         decoder_output = smp_model.decoder(*features)

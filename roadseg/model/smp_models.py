@@ -72,7 +72,7 @@ def build_model(CFG, num_classes):
                     model = _copy
 
             CFG.use_diffusion = True
-            time_dim = 1
+            time_dim = 64
             diffusion_encoder = get_encoder(
                 CFG.smp_backbone,
                 in_channels=time_dim + 2,
