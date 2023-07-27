@@ -146,10 +146,10 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
             averagedLabels.append(output_image)
             print("averaged labels are generated")
         # save the labels
-        with open(os.path.join("/home/ahmet/Documents/RoadSeg/", "averagedLabels.pkl"), "wb") as f:
+        with open("averagedLabels.pkl", "wb") as f:
             pickle.dump(averagedLabels, f)
     else:
-        with open(os.path.join("/home/ahmet/Documents/RoadSeg/", "averagedLabels.pkl"), "rb") as f:
+        with open("averagedLabels.pkl", "rb") as f:
             averagedLabels = pickle.load(f)
 
     img_files = sorted([f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")])
@@ -163,26 +163,27 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
         img.save(os.path.join(dirname, img_file))
 
 def print_average_labels():
-    with open(os.path.join("/home/ahmet/Documents/RoadSeg/", "averagedLabels.pkl"), "rb") as f:
+    with open("averagedLabels.pkl", "rb") as f:
         averagedLabels = pickle.load(f)
     for i in range(2):
         img = PIL.Image.fromarray(averagedLabels[i].astype(np.uint8))
-        img.save(os.path.join("/home/ahmet/Documents/RoadSeg/output/avLabels", f"averagedLabels{i}.png"))
+        img.save(os.path.join("output/avLabels", f"averagedLabels{i}.png"))
 
 def main(CFG: Namespace):
     """Main function."""
-    CFG.out_dir = "/home/ahmet/Documents/RoadSeg/output"
-    CFG.test_imgs_dir = "/home/ahmet/Documents/RoadSeg/data/ethz-cil-road-segmentation-2023/test/images"
-    CFG.data_dir = "/home/ahmet/Documents/RoadSeg/data"
-    CFG.smp_backbone = "timm-regnety_080"
-    CFG.smp_model = "Unet"
+    CFG.out_dir = "/output"
+    CFG.test_imgs_dir = "/cluster/scratch/oahmet/roadseg/ethz-cil-road-segmentation-2023/test/images"
+    CFG.data_dir = "/cluster/scratch/oahmet/roadseg"
+    CFG.log_dir = "/cluster/scratch/oahmet/roadseg/logs"
+    CFG.smp_backbone = "timm-regnety_320"
+    CFG.smp_model = "DeepLabV3+"
     CFG.device = "cuda:0"
     CFG.train_batch_size = 32
     CFG.val_batch_size = 64
-    CFG.experiment_name = "TTA-shift=1"
+    CFG.experiment_name = "DeepLabV3+-continued-TTA"
 
     for fold in range(5):
-        CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
+        CFG.initial_model = f"/cluster/scratch/oahmet/roadseg/logs/DeepLabV3+_timm-regnety_320_timm-regnety-320-DeepLabV3+-continued/2023-07-25_18-08-03/weights/best_epoch-finetune-fold-{fold}.bin"
         model = build_model(CFG, num_classes=2)
         generate_predictions(model, CFG, road_class=1, fold=fold, run_inf=True)
 
