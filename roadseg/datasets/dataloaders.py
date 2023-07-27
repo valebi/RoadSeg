@@ -59,7 +59,9 @@ def get_dataloaders(CFG, transforms):
 
     comp_splits = []
     kf = KFold(
-        n_splits=CFG.n_finetuning_folds, random_state=42, shuffle=True
+        n_splits=CFG.n_finetuning_folds,
+        random_state=(42 if CFG.seed == -1 else CFG.seed),
+        shuffle=True,
     )  # these folds should not change! Even if the rest runs nondeterministically
     for train_index, val_index in kf.split(np.arange(len(comp_dataset))):
         train_subset = Subset(comp_dataset, train_index)
