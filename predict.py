@@ -39,14 +39,42 @@ def get_image_patches(image, patch_size, initial_shift_x, initial_shift_y):
 
     return patch_list, patch_positions
 
-def assemble_image(patches, patch_positions, output_shape):
+def assemble_image(patches, patch_positions, output_shape, ca_length):
     output_image = np.full(output_shape, np.nan)
 
     for patch, position in zip(patches, patch_positions):
+        output_length = output_shape[0]
+        patch_length = patch.shape[0]
+
         start_y, start_x = position
-        end_y = start_y + patch.shape[0]
-        end_x = start_x + patch.shape[1]
-        output_image[start_y:end_y, start_x:end_x] = patch
+        end_y = start_y + patch_length
+        end_x = start_x + patch_length
+
+        top_border_distance = start_y
+        left_border_distance = start_x
+        bottom_border_distance = output_length - end_y
+        right_border_distance = output_length - end_x
+        distance = min(top_border_distance, bottom_border_distance, left_border_distance, right_border_distance)
+
+        ca_dist_from_border = int((patch_length - ca_length)/2)
+        linear_cadfb = min(distance, ca_dist_from_border)
+#---------------------- PUT THE  IMAGE IN OUTPUT  ----------------------------
+        o_y1 = start_y + linear_cadfb
+        o_y2 = end_y - linear_cadfb
+        o_x1 = start_x + linear_cadfb
+        o_x2 = end_x - linear_cadfb
+
+        p_y1 = linear_cadfb
+        p_y2 = patch_length - linear_cadfb
+        p_x1 = linear_cadfb
+        p_x2 = patch_length - linear_cadfb
+
+        #print all above variables
+        #print("o_y1: ", o_y1, "o_y2: ", o_y2, "o_x1: ", o_x1, "o_x2: ", o_x2)
+        #print("p_y1: ", p_y1, "p_y2: ", p_y2, "p_x1: ", p_x1, "p_x2: ", p_x2)
+
+        output_image[o_y1: o_y2, o_x1: o_x2] = patch[p_y1: p_y2, p_x1: p_x2]
+
     return output_image
 
 def run_inference(imgs, CFG, model, road_class=1, fold=""):
@@ -75,9 +103,15 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
     print("tta directory is created")
 
     # print(big_image_shape)
-    onePieceData = OnepieceCILDataset(CFG)
-    big_image_shape = onePieceData.img1.shape
+    #onePieceData = OnepieceCILDataset(CFG)
+    #save onepieceData to pickle
+    #with open('onePieceData.pickle', 'wb') as f:
+    #    pickle.dump(onePieceData, f)
+    #load onepieceData from pickle
+    with open('onePieceData.pickle', 'rb') as f:
+        onePieceData = pickle.load(f)
 
+    big_image_shape = onePieceData.img1.shape
 
     if run_inf:
         print("starting to generate predictions")
@@ -87,8 +121,8 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
             output_image = np.full(big_image_shape[:2], np.nan)
             valid_entries = np.zeros(big_image_shape[:2])
 
-            for initial_shift_x in range(0, CFG.img_size, 1):
-                for initial_shift_y in range(0, CFG.img_size, 1):
+            for initial_shift_x in range(0, CFG.img_size, 50):
+                for initial_shift_y in range(0, CFG.img_size, 50):
                     #get the shifted patches from the test images
                     patches, positions = get_image_patches(bigImage[:,:,:3], CFG.img_size, initial_shift_x, initial_shift_y)
                     print("patches are generated")
@@ -97,11 +131,11 @@ def generate_predictions(model, CFG, road_class=1, fold="", run_inf=True):
                     patch_labels = run_inference(patches, CFG, model, road_class=1, fold="")
                     print("patch labels are generated")
 
-                    assembled_img = assemble_image(patch_labels, positions, big_image_shape[:2])
+                    assembled_img = assemble_image(patch_labels, positions, big_image_shape[:2], 300)
                     output_image = np.where(np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img))
                     valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
 
-                    print(f"assembled image and appended to big labels, shift_x : {initial_shift_x}, shift_y : {initial_shift_y}")
+                    print(f"fold : {fold}, assembled image and added to big labels, shift_x : {initial_shift_x}, shift_y : {initial_shift_y}")
             output_image = output_image / valid_entries
             # take the average to get labels for the images
             averagedLabels.append(output_image)
