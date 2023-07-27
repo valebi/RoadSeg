@@ -332,7 +332,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
 def evaluate_finetuning(pretrained_model, comp_splits, CFG):
     scores_to_watch = []
     for fold, (train_loader, val_loader) in enumerate(comp_splits):
-        model = copy.deepcopy(pretrained_model)
+        model = copy.deepcopy(pretrained_model).to(CFG.device)
         model_name = f"finetune-fold-{fold}"
         optimizer = optim.Adam(
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
