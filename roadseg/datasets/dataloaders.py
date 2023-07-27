@@ -35,7 +35,7 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=False,
+        drop_last=False if "DeepLab" not in CFG.smp_model else True,
     )
     val_loader = DataLoader(
         val_dataset,
@@ -70,7 +70,7 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False,
+            drop_last=False if "DeepLab" not in CFG.smp_model else True,
         )
         # val dataset is shuffled to get random plots
         comp_val_loader = DataLoader(

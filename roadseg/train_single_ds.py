@@ -135,8 +135,8 @@ def valid_one_epoch(
         epoch_loss = running_loss / dataset_size
 
         # logging.info("Before", y_pred.shape)
-        y_pred = torch.sigmoid(y_pred[:, 1])
-        # y_pred = torch.nn.functional.softmax(y_pred, dim=1)[:, 1]
+        # y_pred = torch.sigmoid(y_pred[:, 1])
+        y_pred = torch.nn.functional.softmax(y_pred, dim=1)[:, 1]
 
         # val_prec = precision(y_pred.cpu(), labels.cpu())
         # val_rec = recall(y_pred.cpu(), labels.cpu())

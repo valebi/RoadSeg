@@ -140,7 +140,7 @@ def parse_args() -> argparse.Namespace:
         "--smp_model",
         type=str,
         default="Unet",
-        choices=["Unet", "UnetPlusPlus", "DeepLabV3", "medsegdiff"],
+        choices=["Unet", "UnetPlusPlus", "DeepLabV3", "DeepLabV3+"],
         help="Model (/Framework) for pytorch-segmentation-models",
     )
     parser.add_argument(
@@ -284,6 +284,12 @@ def parse_args() -> argparse.Namespace:
         default="cosine",
         choices=["cosine", "plateau", "exponential", "cosine_warm_restarts"],
         help="Learning rate scheduler.",
+    )
+    parser.add_argument(
+        "--scheduler_warmup_iters",
+        type=int,
+        default="1",
+        help="Learning rate scheduler warmup period. Uses a linear warmup fomr 0.01 lr to 1.0 lr.",
     )
     parser.add_argument(
         "--min_lr",

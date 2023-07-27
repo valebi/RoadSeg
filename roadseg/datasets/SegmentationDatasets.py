@@ -215,12 +215,35 @@ class CleanBingDataset(SegmentationDataset):
             if f.replace("processed_sat", "processed_label") in lbls
         ]
         self.lbl_paths = [f.replace("processed_sat", "processed_label") for f in self.img_paths]
+        """
         self.crop = A.augmentations.crops.transforms.RandomResizedCrop(
             CFG.img_size,
             CFG.img_size,
             scale=(0.85, 1.15),
             ratio=(0.9, 1.1),
             interpolation=cv2.INTER_LINEAR,
+        )
+        """
+        self.crop = A.Compose(
+            [
+                A.PadIfNeeded(
+                    min_height=CFG.img_size,
+                    min_width=CFG.img_size,
+                    p=1.0,
+                    border_mode=cv2.BORDER_CONSTANT,
+                ),
+                A.augmentations.geometric.rotate.Rotate(
+                    limit=180, p=0.25, border_mode=cv2.BORDER_CONSTANT
+                ),
+                A.augmentations.crops.transforms.RandomResizedCrop(
+                    CFG.img_size,
+                    CFG.img_size,
+                    scale=(0.85, 1.15),
+                    ratio=(0.9, 1.1),
+                    interpolation=cv2.INTER_LINEAR,
+                ),
+            ],
+            p=1,
         )
         self._ensure_size()
 

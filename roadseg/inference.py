@@ -41,7 +41,7 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
     )
 
     pred = torch.concat([model(d) for d, in dl], axis=0)
-    pred = torch.sigmoid(pred).cpu().numpy()
+    pred = torch.nn.functional.softmax(pred, dim=1).cpu().numpy()
     pred = pred[:, road_class, :, :] * 255
     pred = pred.astype(np.uint8)
     for i, prd in enumerate(pred):

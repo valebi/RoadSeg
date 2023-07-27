@@ -11,7 +11,7 @@ import torchmetrics.classification
 JaccardLoss = smp.losses.JaccardLoss(mode="multilabel")
 DiceLoss = smp.losses.DiceLoss(mode="multilabel")
 # BCELoss     = smp.losses.SoftBCEWithLogitsLoss()
-BCELoss = smp.losses.SoftBCEWithLogitsLoss()
+BCELoss = nn.CrossEntropyLoss()
 LovaszLoss = smp.losses.LovaszLoss(mode="multilabel", per_image=False)
 TverskyLoss = smp.losses.TverskyLoss(mode="multilabel", log_loss=False)
 
