@@ -167,6 +167,7 @@ def print_average_labels():
         averagedLabels = pickle.load(f)
     for i in range(2):
         img = PIL.Image.fromarray(averagedLabels[i].astype(np.uint8))
+        os.makedirs("output/avLabels", exist_ok=True)
         img.save(os.path.join("output/avLabels", f"averagedLabels{i}.png"))
 
 def main(CFG: Namespace):
@@ -182,10 +183,10 @@ def main(CFG: Namespace):
     CFG.val_batch_size = 64
     CFG.experiment_name = "DeepLabV3+-continued-TTA"
 
-    for fold in range(5):
-        CFG.initial_model = f"/cluster/scratch/oahmet/roadseg/logs/DeepLabV3+_timm-regnety_320_timm-regnety-320-DeepLabV3+-continued/2023-07-25_18-08-03/weights/best_epoch-finetune-fold-{fold}.bin"
-        model = build_model(CFG, num_classes=2)
-        generate_predictions(model, CFG, road_class=1, fold=fold, run_inf=True)
+    #for fold in range(5):
+    #    CFG.initial_model = f"/cluster/scratch/oahmet/roadseg/logs/DeepLabV3+_timm-regnety_320_timm-regnety-320-DeepLabV3+-continued/2023-07-25_18-08-03/weights/best_epoch-finetune-fold-{fold}.bin"
+    #    model = build_model(CFG, num_classes=2)
+    #    generate_predictions(model, CFG, road_class=1, fold=fold, run_inf=True)
 
     print_average_labels()
     make_ensemble(CFG)
