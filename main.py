@@ -49,7 +49,8 @@ def main(CFG: Namespace):
         download_file_from_google_drive(file_id, destination)
         logging.info(f"Downloaded model to {destination}.")
 
-    model = build_model(CFG, num_classes=2).to(CFG.device)
+    if not(CFG.no_pretrain and CFG.no_finetune):
+        model = build_model(CFG, num_classes=2).to(CFG.device)
 
     if CFG.debug:
         imgs, msks = next(iter(train_loader))
