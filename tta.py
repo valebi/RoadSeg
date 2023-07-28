@@ -92,7 +92,8 @@ def assemble_image(patches, patch_positions, output_shape, ca_length):
     output_image = np.full(output_shape, np.nan)
 
     for patch, position in zip(patches, patch_positions):
-        output_length = output_shape[0]
+        output_y = output_shape[0]
+        output_x = output_shape[1]
         patch_length = patch.shape[0]
 
         start_y, start_x = position
@@ -101,8 +102,8 @@ def assemble_image(patches, patch_positions, output_shape, ca_length):
 
         top_border_distance = start_y
         left_border_distance = start_x
-        bottom_border_distance = output_length  - end_y
-        right_border_distance = output_length - end_x
+        bottom_border_distance = output_y  - end_y
+        right_border_distance = output_x - end_x
         distance = min(top_border_distance, bottom_border_distance, left_border_distance, right_border_distance)
 
         ca_dist_from_border = int((patch_length - ca_length)/2)
@@ -252,7 +253,7 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
     result_zone = 300
     shift = 60#50
     rotations = [0, 90, 180, 270]
-    scales = [[0.9, 0.9], [0.95, 1], [1, 1], [1.05, 1], [1, 1.1], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
+    scales = [[0.95, 1], [0.9, 0.9], [1, 1], [1.05, 1], [1, 1.1], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
     flips = [0, 1, -1] # [0, 1]
 
     if run_inf:
