@@ -252,7 +252,7 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
     result_zone = 300
     shift = 60#50
     rotations = [0, 90, 180, 270]
-    scales = [[0.9, 0.9], [0.95, 0.95], [1, 1], [1.05, 1.05], [1.1, 1.1], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
+    scales = [[0.9, 0.9], [0.95, 1], [1, 1], [1.05, 1], [1, 1.1], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
     flips = [0, 1, -1] # [0, 1]
 
     if run_inf:
@@ -306,7 +306,7 @@ def apply_tta(CFG: Namespace):
         else:
             CFG.initial_model = os.path.join(CFG.log_dir,  f"weights/best_epoch-finetune-fold-{fold}.bin")
         model = build_model(CFG, num_classes=2)
-        generate_predictions(model, CFG, road_class=1, fold=fold, run_inf=True)
+        generate_predictions(model, CFG, fold=fold, run_inf=True)
 
 def plot_image(img):
     plt.imshow(img)
