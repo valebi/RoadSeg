@@ -93,6 +93,13 @@ def parse_args() -> argparse.Namespace:
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--no_finetune", action="store_true", help="Disable pretraining.")
+    parser.add_argument(
+        "--finetuned_weights_dir",
+        type=str,
+        default="logs",
+        help="Where to store the predictions. MUST'T CONTAIN ANY DIGIT!",
+    )
     parser.add_argument("--tta", action="store_true", help="Disable pretraining.")
     parser.add_argument(
         "--onepiece",
