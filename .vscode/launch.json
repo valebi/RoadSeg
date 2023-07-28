@@ -22,6 +22,7 @@
                 //"logs/onat-last_epoch-pretrain.bin",
                 //"--use_diffusion",
                 "--onepiece",
+                "--partial_diffusion",
                 "--decoder_depth",
                 "4",
                 "--train_batch_size",
@@ -29,7 +30,7 @@
                 "--val_batch_size",
                 "2",
                 "--datasets",
-                "bing-clean",
+                "google",
                 "--max_per_dataset",
                 "10",
                 "--make_submission",
@@ -50,16 +51,16 @@
                 "--pretraining_loss",
                 "bce",
                 "--finetuning_loss",
-                "smp_soft_ce",
-                "--no_pretrain",
+                "reg_f1",
                 "--metrics_to_watch",
                 "f1",
                 "compf1",
                 "precision",
                 "recall",
-                "iou"
-                // "--initial_model",
-                // "/Users/onat/School/RoadSeg/temp_folder/chk.bin",
+                "iou",
+                "--no_pretrain"
+                //"--initial_model",
+                //"/Users/onat/School/RoadSeg/temp_folder/chk.bin",
                 // "--model_download_drive_id",
                 // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
                 // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link

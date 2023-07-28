@@ -27,6 +27,10 @@ def generate_predictions(model, CFG, road_class=1, fold=""):
         for f in img_files
     ]
 
+    if CFG.partial_diffusion:
+        # add (un)known mask part
+        imgs = [np.concatenate((i, np.zeros_like(i[:, :, :2]))) for i in imgs]
+
     model.to(CFG.device)
     model.eval()
 

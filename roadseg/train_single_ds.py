@@ -58,6 +58,7 @@ def train_one_epoch(
         with amp.autocast(enabled=True):
             y_pred = model(images)
             y_pred = y_pred * loss_mask[:, None]
+            labels = labels * loss_mask
             loss = criterion(y_pred, labels)
             loss = loss / n_accumulate
 
@@ -127,6 +128,7 @@ def valid_one_epoch(
 
         y_pred = model(images)
         y_pred = y_pred * loss_mask[:, None]
+        labels = labels * loss_mask
         loss = criterion(y_pred, labels)
 
         running_loss += loss.item() * batch_size
@@ -159,7 +161,7 @@ def valid_one_epoch(
     torch.cuda.empty_cache()
     gc.collect()
 
-    return epoch_loss, val_scores, images, y_pred, labels
+    return epoch_loss, val_scores, images[:, :3], y_pred, labels
 
 
 def run_training(
