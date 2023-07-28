@@ -93,6 +93,7 @@ def parse_args() -> argparse.Namespace:
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--tta", action="store_true", help="Disable pretraining.")
     parser.add_argument(
         "--onepiece",
         action="store_true",
