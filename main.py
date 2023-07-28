@@ -4,6 +4,8 @@ import logging
 import pathlib
 import time
 from argparse import Namespace
+import glob
+
 
 from torch import nn
 from torchsummary import summary
@@ -15,8 +17,10 @@ from roadseg.model.smp_models import build_model
 # from roadseg.train_single_ds_diffusion import evaluate_finetuning, pretrain_model
 # from roadseg.inference_diffusion import make_ensemble, make_submission
 from roadseg.utils.augmentations import get_albumentations
+from roadseg.utils.mask_to_submission import masks_to_submission
 from roadseg.utils.plots import plot_batch
 from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
+from tta import apply_tta
 
 
 def main(CFG: Namespace):
@@ -69,7 +73,12 @@ def main(CFG: Namespace):
     avg_score = evaluate_finetuning(model, test_splits, CFG)
     logging.info(f"Average {CFG.metrics_to_watch[0]} scores of folds: {avg_score}.")
 
+    if CFG.tta:
+        apply_tta(CFG)
+
     make_ensemble(CFG)
+    image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
+    masks_to_submission(CFG.submission_file, "", *image_filenames)
 
     if CFG.make_submission:
         make_submission(CFG)
