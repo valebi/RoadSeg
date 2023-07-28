@@ -307,7 +307,7 @@ def apply_tta(CFG: Namespace):
         else:
             CFG.initial_model = os.path.join(CFG.log_dir,  f"weights/best_epoch-finetune-fold-{fold}.bin")
         model = build_model(CFG, num_classes=2)
-        generate_predictions(model, CFG, road_class=1, fold=fold, run_inf=True)
+        generate_predictions(model, CFG, fold=fold, run_inf=True)
 
 def plot_image(img):
     plt.imshow(img)
