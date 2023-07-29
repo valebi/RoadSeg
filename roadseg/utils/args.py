@@ -287,6 +287,12 @@ def parse_args() -> argparse.Namespace:
         help="Number of folds for finetuning.",
     )
     parser.add_argument(
+        "--only_fold",
+        type=int,
+        default=-1,
+        help="Will skip all other finetuning folds if set != -1",
+    )
+    parser.add_argument(
         "--scheduler",
         type=str,
         default="cosine",
