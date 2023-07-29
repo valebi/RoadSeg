@@ -159,6 +159,7 @@ def build_model(CFG, num_classes):
             pseudo_diffusion = try_load_weights(pseudo_diffusion, init_model, device=CFG.device)
             logging.info(f"Loaded weights of ENTIRE MODEL")
 
+        CFG.initial_model = init_model
         pseudo_diffusion.to(CFG.device)
         return nn.DataParallel(pseudo_diffusion)
 
