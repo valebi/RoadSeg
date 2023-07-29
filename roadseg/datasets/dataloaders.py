@@ -35,7 +35,7 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=False,
+        drop_last=False if "DeepLab" not in CFG.smp_model else True,
     )
     val_loader = DataLoader(
         val_dataset,
@@ -49,14 +49,19 @@ def get_dataloaders(CFG, transforms):
     # k-fold split of finetuning datasets
     if CFG.onepiece:
         comp_dataset = OnepieceCILDataset(CFG, transforms=transforms)
-        comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=None)
+        if CFG.use_diffusion and CFG.partial_diffusion:
+            comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=transforms)
+        else:
+            comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=None)
     else:
         comp_dataset = CIL23Dataset(CFG, transforms=transforms)
         comp_dataset_notransforms = CIL23Dataset(CFG, transforms=None)
 
     comp_splits = []
     kf = KFold(
-        n_splits=CFG.n_finetuning_folds, random_state=42, shuffle=True
+        n_splits=CFG.n_finetuning_folds,
+        random_state=(42 if CFG.seed == -1 else CFG.seed),
+        shuffle=True,
     )  # these folds should not change! Even if the rest runs nondeterministically
     for train_index, val_index in kf.split(np.arange(len(comp_dataset))):
         train_subset = Subset(comp_dataset, train_index)
@@ -67,7 +72,7 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False,
+            drop_last=False if "DeepLab" not in CFG.smp_model else True,
         )
         # val dataset is shuffled to get random plots
         comp_val_loader = DataLoader(

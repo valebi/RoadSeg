@@ -510,6 +510,11 @@ def cosine_beta_schedule(timesteps, s=0.008):
     return torch.clip(betas, 0, 0.999)
 
 
+import segmentation_models_pytorch as smp
+
+dice_loss = smp.losses.DiceLoss(mode="multiclass")
+
+
 class MedSegDiff(nn.Module):
     def __init__(
         self,
@@ -637,7 +642,7 @@ class MedSegDiff(nn.Module):
 
     def model_predictions(self, x, t, c, x_self_cond=None, clip_x_start=False):
         model_output = self.model(x, t, c, x_self_cond)
-        maybe_clip = partial(torch.clamp, min=-1.0, max=1.0) if clip_x_start else identity
+        maybe_clip = partial(torch.clamp, min=0.0, max=1.0) if clip_x_start else identity
 
         if self.objective == "pred_noise":
             pred_noise = model_output
@@ -646,7 +651,8 @@ class MedSegDiff(nn.Module):
 
         elif self.objective == "pred_x0":
             x_start = model_output
-            x_start = maybe_clip(x_start)
+            x_start = torch.nn.functional.softmax(x_start, dim=1)
+            # x_start = maybe_clip(x_start)
             pred_noise = self.predict_noise_from_start(x, t, x_start)
 
         elif self.objective == "pred_v":
@@ -662,7 +668,7 @@ class MedSegDiff(nn.Module):
         x_start = preds.pred_x_start
 
         if clip_denoised:
-            x_start.clamp_(-1.0, 1.0)
+            x_start.clamp_(0.0, 1.0)
 
         model_mean, posterior_variance, posterior_log_variance = self.q_posterior(
             x_start=x_start, x_t=x, t=t
@@ -676,7 +682,8 @@ class MedSegDiff(nn.Module):
         model_mean, _, model_log_variance, x_start = self.p_mean_variance(
             x=x, t=batched_times, c=c, x_self_cond=x_self_cond, clip_denoised=clip_denoised
         )
-        noise = torch.randn_like(x) if t > 0 else 0.0  # no noise if t == 0
+        noise = 0.5 + 0.5 * torch.randn_like(x) if t > 0 else 0.5  # no noise if t == 0
+
         pred_img = model_mean + (0.5 * model_log_variance).exp() * noise
         return pred_img, x_start
 
@@ -685,6 +692,8 @@ class MedSegDiff(nn.Module):
         batch, device = shape[0], self.betas.device
 
         img = torch.randn(shape, device=device)
+        img = 0.5 + 0.5 * img  # shift to 0.5-centered distribution
+        img = torch.clamp(img, min=0.0, max=1.0)  # clamp to [0,1]
 
         x_start = None
 
@@ -696,7 +705,7 @@ class MedSegDiff(nn.Module):
             self_cond = x_start if self.self_condition else None
             img, x_start = self.p_sample(img, t, cond, self_cond)
 
-        img = unnormalize_to_zero_to_one(img)
+        # img = unnormalize_to_zero_to_one(img)
         return img
 
     @torch.no_grad()
@@ -719,6 +728,8 @@ class MedSegDiff(nn.Module):
         )  # [(T-1, T-2), (T-2, T-3), ..., (1, 0), (0, -1)]
 
         img = torch.randn(shape, device=device)
+        img = 0.5 + 0.5 * img  # shift to 0.5-centered distribution
+        img = torch.clamp(img, min=0.0, max=1.0)  # clamp to [0,1]
 
         x_start = None
 
@@ -740,10 +751,12 @@ class MedSegDiff(nn.Module):
             c = (1 - alpha_next - sigma**2).sqrt()
 
             noise = torch.randn_like(img)
+            noise = 0.5 + 0.5 * noise  # shift to 0.5-centered distribution
+            noise = torch.clamp(noise, min=0.0, max=1.0)  # clamp to [0,1]
 
             img = x_start * alpha_next.sqrt() + c * pred_noise + sigma * noise
 
-        img = unnormalize_to_zero_to_one(img)
+        # img = unnormalize_to_zero_to_one(img)
         return img
 
     @torch.no_grad()
@@ -757,49 +770,88 @@ class MedSegDiff(nn.Module):
 
     def q_sample(self, x_start, t, noise=None):
         noise = default(noise, lambda: torch.randn_like(x_start))
-
+        noise = 0.5 + 0.5 * noise  # shift to 0.5-centered distribution
+        noise = torch.clamp(noise, min=0.0, max=1.0)  # clamp to [0,1]
         return (
             extract(self.sqrt_alphas_cumprod, t, x_start.shape) * x_start
             + extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape) * noise
         )
 
-    def p_losses(self, x_start, t, cond, noise=None):
+    def p_losses(self, x_start, t, cond, noise=None, t0_mask=None, loss_mask=None):
+        # add parameter t0_mask and loss_mask
+        # modify noise as product of x_start and t0_mask
         b, c, h, w = x_start.shape
         noise = default(noise, lambda: torch.randn_like(x_start))
-
+        noise = 0.5 + 0.5 * noise  # shift to 0.5-centered distribution
+        noise = torch.clamp(noise, min=0.0, max=1.0)  # clamp to [0,1]
         # noise sample
 
         x = self.q_sample(x_start=x_start, t=t, noise=noise)
 
+        """
+        import matplotlib.pyplot as plt
+        plt.subplot(1, 4, 1)
+        plt.imshow(x_start[0, 0].cpu().numpy())
+        if t0_mask is not None:
+            plt.subplot(1, 4, 2)
+            plt.imshow(t0_mask[0].cpu().numpy())
+        if loss_mask is not None:
+            plt.subplot(1, 4, 3)
+            plt.imshow(loss_mask[0].cpu().numpy())
+
+        if t0_mask is not None:
+            plt.subplot(1, 4, 4)
+            plt.imshow((
+                x * (1 - t0_mask) + (x_start * t0_mask))[0,0].cpu().numpy())
+        plt.show()
+        """
+
+        if t0_mask is not None:
+            x = x * (1 - t0_mask[:, None]) + (x_start * t0_mask[:, None])
+
         # if doing self-conditioning, 50% of the time, predict x_start from current set of times
         # and condition with unet with that
         # this technique will slow down training by 25%, but seems to lower FID significantly
-
         x_self_cond = None
-        if self.self_condition and random() < 0.5:
+        if (self.self_condition) and random() < 0.5:
             with torch.no_grad():
                 # predicting x_0
-
-                x_self_cond = self.model_predictions(x, t, cond).pred_x_start
+                x_self_cond = self.model(x, t, cond, x_self_cond=None, t0_mask=t0_mask)
                 x_self_cond.detach_()
+                x = self.q_sample(x_start=x_self_cond, t=t, noise=noise)
 
         # predict and take gradient step
+        """
+        import matplotlib.pyplot as plt
+        plt.imshow(x[0, 0].cpu().numpy())
+        plt.show()
+        """
 
-        model_out = self.model(x, t, cond, x_self_cond)
+        model_out = self.model(x, t, cond, x_self_cond=None, t0_mask=t0_mask)
 
         if self.objective == "pred_noise":
             target = noise
         elif self.objective == "pred_x0":
             target = x_start
+            # model_out = torch.nn.functional.softmax(model_out, dim=1)
+            # @TODO make this less ugly
+            return dice_loss(model_out, x_start[:, 1].long())
+            # return F.binary_cross_entropy_with_logits(model_out, x_start, weight=loss_mask)
         elif self.objective == "pred_v":
+            raise NotImplementedError(
+                "v parameterization not implemented yet. Not sure what to do with the softmax"
+            )
             v = self.predict_v(x_start, t, noise)
             target = v
         else:
             raise ValueError(f"unknown objective {self.objective}")
 
-        return F.mse_loss(model_out, target)
+        if loss_mask is not None:
+            return F.mse_loss(loss_mask[:, None] * model_out, loss_mask[:, None] * target)
+        else:
+            return F.mse_loss(model_out, target)
 
-    def forward(self, img, cond_img, *args, **kwargs):
+    def forward(self, img, cond_img, *args, t0_mask=None, loss_mask=None, **kwargs):
         if img.ndim == 3:
             img = rearrange(img, "b h w -> b 1 h w")
 
@@ -827,5 +879,7 @@ class MedSegDiff(nn.Module):
 
         times = torch.randint(0, self.num_timesteps, (b,), device=device).long()
 
-        img = normalize_to_neg_one_to_one(img)
-        return self.p_losses(img, times, cond_img, *args, **kwargs)
+        # img = normalize_to_neg_one_to_one(img)
+        return self.p_losses(
+            img, times, cond_img, *args, t0_mask=t0_mask, loss_mask=loss_mask, **kwargs
+        )

@@ -58,7 +58,8 @@ def train_one_epoch(
         with amp.autocast(enabled=True):
             y_pred = model(images)
             y_pred = y_pred * loss_mask[:, None]
-            loss = criterion(y_pred[:, 1], labels.float())
+            labels = labels * loss_mask
+            loss = criterion(y_pred, labels)
             loss = loss / n_accumulate
 
         scaler.scale(loss).backward()
@@ -127,7 +128,8 @@ def valid_one_epoch(
 
         y_pred = model(images)
         y_pred = y_pred * loss_mask[:, None]
-        loss = criterion(y_pred[:, 1], labels.float())
+        labels = labels * loss_mask
+        loss = criterion(y_pred, labels)
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
@@ -135,8 +137,8 @@ def valid_one_epoch(
         epoch_loss = running_loss / dataset_size
 
         # logging.info("Before", y_pred.shape)
-        y_pred = torch.sigmoid(y_pred[:, 1])
-        # y_pred = torch.nn.functional.softmax(y_pred, dim=1)[:, 1]
+        # y_pred = torch.sigmoid(y_pred[:, 1])
+        y_pred = torch.nn.functional.softmax(y_pred, dim=1)[:, 1]
 
         # val_prec = precision(y_pred.cpu(), labels.cpu())
         # val_rec = recall(y_pred.cpu(), labels.cpu())
@@ -159,7 +161,7 @@ def valid_one_epoch(
     torch.cuda.empty_cache()
     gc.collect()
 
-    return epoch_loss, val_scores, images, y_pred, labels
+    return epoch_loss, val_scores, images[:, :3], y_pred, labels
 
 
 def run_training(

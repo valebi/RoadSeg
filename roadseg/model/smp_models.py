@@ -8,7 +8,7 @@ from segmentation_models_pytorch.encoders import get_encoder
 from torch import nn
 
 import roadseg.model.dummy_unet as dummy_unet
-from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter
+from roadseg.model.dummy_diffusion_adapter import DiffusionAdapter, PseudoDiffusionWrapper
 from roadseg.model.lucidrains_medsegdiff import MedSegDiff, Unet
 
 
@@ -55,10 +55,14 @@ def build_model(CFG, num_classes):
     elif CFG.use_diffusion:
         if True:
             # dummy version
-            CFG.use_diffusion = False
+            is_partial = CFG.partial_diffusion
             init_model = CFG.initial_model
+            CFG.use_diffusion = False
+            CFG.partial_diffusion = False
             CFG.initial_model = None
-            model = build_model(CFG, num_classes)  # .module
+
+            model = build_model(CFG, num_classes).module
+            CFG.partial_diffusion = is_partial
             loaded_weights = False
 
             if init_model:
@@ -72,7 +76,7 @@ def build_model(CFG, num_classes):
                     model = _copy
 
             CFG.use_diffusion = True
-            time_dim = 32
+            time_dim = 64
             diffusion_encoder = get_encoder(
                 CFG.smp_backbone,
                 in_channels=time_dim + 2,
@@ -81,17 +85,23 @@ def build_model(CFG, num_classes):
                 output_stride=model.encoder.output_stride,
             )
             adapter = DiffusionAdapter(
-                model, diffusion_encoder, img_size=CFG.img_size, dim=time_dim
+                model,
+                diffusion_encoder,
+                img_size=CFG.img_size,
+                dim=time_dim,
+                timesteps=CFG.diffusion_timesteps,
             )
 
-            diffusion = MedSegDiff(adapter, timesteps=100, objective="pred_x0")  # 1000
+            diffusion = MedSegDiff(
+                adapter, timesteps=CFG.diffusion_timesteps, objective="pred_x0"
+            )  # 1000
 
             if init_model and not loaded_weights:
                 # try loading the whole model
                 diffusion = try_load_weights(diffusion, init_model, device=CFG.device)
                 logging.info(f"Loaded weights of ENTIRE MODEL")
 
-            diffusion = diffusion.to(CFG.device)
+            # diffusion = diffusion.to(CFG.device)
             # diffusion = nn.DataParallel(diffusion)
             return diffusion
         else:
@@ -113,6 +123,45 @@ def build_model(CFG, num_classes):
                 encoding_model=encoding_model,
             )
             return MedSegDiff(unet, timesteps=100, objective="pred_x0").to(CFG.device)
+    # elif partial -> construct model with dummy diffusion adapter, then return it without
+    elif CFG.partial_diffusion:
+        # not diffusion but partial labels available
+        is_partial = CFG.partial_diffusion
+        init_model = CFG.initial_model
+        CFG.partial_diffusion = False
+        CFG.initial_model = None
+
+        model1 = build_model(CFG, num_classes).module
+        CFG.partial_diffusion = is_partial
+        loaded_weights = False
+
+        if init_model:
+            # try loading the encoder/decoder only
+            _copy = copy.deepcopy(model1)
+            try:
+                model1 = try_load_weights(model1, init_model, device=CFG.device)
+                logging.info(f"Loaded weights of ENCODER/DECODER ONLY")
+                loaded_weights = True
+            except:
+                model1 = _copy
+
+        model2 = smp.DeepLabV3(
+            encoder_name="timm-regnety_032",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights="imagenet",  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=7,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=num_classes,  # model output channels (number of classes in your dataset)
+            encoder_depth=5,
+            activation=None,
+        )
+        pseudo_diffusion = PseudoDiffusionWrapper(model1, model2)
+        if init_model and not loaded_weights:
+            # try loading the whole model
+            pseudo_diffusion = try_load_weights(pseudo_diffusion, init_model, device=CFG.device)
+            logging.info(f"Loaded weights of ENTIRE MODEL")
+
+        pseudo_diffusion.to(CFG.device)
+        return nn.DataParallel(pseudo_diffusion)
+
     elif CFG.smp_model == "Unet":
         model = smp.Unet(
             encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
@@ -141,6 +190,14 @@ def build_model(CFG, num_classes):
             classes=num_classes,  # model output channels (number of classes in your dataset)
             activation=None,
         )
+    elif CFG.smp_model == "DeepLabV3+":
+        model = smp.DeepLabV3Plus(
+            encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=num_classes,  # model output channels (number of classes in your dataset)
+            activation=None,
+        )
     else:
         raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
 
@@ -148,7 +205,7 @@ def build_model(CFG, num_classes):
         model = try_load_weights(model, CFG.initial_model, device=CFG.device)
 
     model.to(CFG.device)
-    # model = nn.DataParallel(model)
+    model = nn.DataParallel(model)
     return model
 
 

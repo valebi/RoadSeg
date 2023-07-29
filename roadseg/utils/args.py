@@ -93,6 +93,14 @@ def parse_args() -> argparse.Namespace:
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--no_finetune", action="store_true", help="Disable pretraining.")
+    parser.add_argument(
+        "--finetuned_weights_dir",
+        type=str,
+        default="logs",
+        help="Where to store the predictions. MUST'T CONTAIN ANY DIGIT!",
+    )
+    parser.add_argument("--tta", action="store_true", help="Disable pretraining.")
     parser.add_argument(
         "--onepiece",
         action="store_true",
@@ -140,7 +148,7 @@ def parse_args() -> argparse.Namespace:
         "--smp_model",
         type=str,
         default="Unet",
-        choices=["Unet", "UnetPlusPlus", "DeepLabV3", "medsegdiff"],
+        choices=["Unet", "UnetPlusPlus", "DeepLabV3", "DeepLabV3+"],
         help="Model (/Framework) for pytorch-segmentation-models",
     )
     parser.add_argument(
@@ -166,6 +174,17 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=4,
         help="Decoder depth for pytorch-segmentation-models. Can only be 4 or 5. Image size must be divisible by 2^decoder_depth.",
+    )
+    parser.add_argument(
+        "--diffusion_timesteps",
+        type=int,
+        default=100,
+        help="Number of timesteps for diffusion models.",
+    )
+    parser.add_argument(
+        "--partial_diffusion",
+        action="store_true",
+        help="Whether to use partial labels as input to the diffusion process.",
     )
     parser.add_argument(
         "--smp_backbone",
@@ -273,6 +292,12 @@ def parse_args() -> argparse.Namespace:
         default="cosine",
         choices=["cosine", "plateau", "exponential", "cosine_warm_restarts"],
         help="Learning rate scheduler.",
+    )
+    parser.add_argument(
+        "--scheduler_warmup_iters",
+        type=int,
+        default="1",
+        help="Learning rate scheduler warmup period. Uses a linear warmup fomr 0.01 lr to 1.0 lr.",
     )
     parser.add_argument(
         "--min_lr",

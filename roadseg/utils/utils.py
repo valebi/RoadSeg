@@ -29,8 +29,8 @@ def set_seed(seed: int):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     # When running on the CuDNN backend, two further options must be set
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
     # Set a fixed value for the hash seed
     os.environ["PYTHONHASHSEED"] = str(seed)
 
@@ -87,7 +87,6 @@ def setup_logging(cfg: argparse.Namespace):
     # Suppress logging from other modules
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("PIL").setLevel(logging.WARNING)
-    
 
     prepare_wandb(cfg)
 
@@ -167,7 +166,7 @@ def download_file_from_google_drive(file_id, destination, chunk_size=16384):
     url = "https://docs.google.com/uc?export=download"
 
     session = requests.Session()
-    params = {'id': file_id, 'confirm': 1}
+    params = {"id": file_id, "confirm": 1}
     response = session.get(url, params=params, stream=True)
 
     with open(destination, "wb") as f:
@@ -175,6 +174,3 @@ def download_file_from_google_drive(file_id, destination, chunk_size=16384):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
                 # yield i, chunk_size_ #This can be used to implement a progress bar
-
-
-
