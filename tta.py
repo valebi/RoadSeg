@@ -379,16 +379,18 @@ def main(CFG: Namespace):
     CFG.experiment_name = "partial"
     CFG.partial_diffusion = True
 
-    for fold in range(5):
-        # CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
-        CFG.initial_model = CFG.initial_model.replace("-fold-*.bin", f"-fold-{fold}.bin")
-        if os.path.isfile(CFG.initial_model):
-            model = build_model(CFG, num_classes=2)
-            generate_predictions(model, CFG, fold=fold, run_inf=True)
-            print_average_labels(CFG)
-        else:
-            print("weights not found for fold: ", fold)
-
+    if False:
+        for fold in range(5):
+            # CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
+            CFG.initial_model = CFG.initial_model.replace("-fold-*.bin", f"-fold-{fold}.bin")
+            if os.path.isfile(CFG.initial_model):
+                model = build_model(CFG, num_classes=2)
+                generate_predictions(model, CFG, fold=fold, run_inf=True)
+                print_average_labels(CFG)
+            else:
+                print("weights not found for fold: ", fold)
+    else:
+        pass
     make_ensemble(CFG)
 
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
