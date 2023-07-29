@@ -145,13 +145,14 @@ def build_model(CFG, num_classes):
             except:
                 model1 = _copy
 
-        model2 = smp.DeepLabV3(
-            encoder_name="timm-regnety_032",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        model2 = model = smp.UnetPlusPlus(
+            encoder_name="timm-regnety_040",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
             encoder_weights="imagenet",  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
             in_channels=7,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
             classes=num_classes,  # model output channels (number of classes in your dataset)
-            encoder_depth=5,
             activation=None,
+            decoder_channels=(256, 128, 64, 32, 32),
+            encoder_depth=5,
         )
         pseudo_diffusion = PseudoDiffusionWrapper(model1, model2)
         if init_model and not loaded_weights:

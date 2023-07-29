@@ -57,9 +57,9 @@
                 "precision",
                 "recall",
                 "iou",
+                "--partial_diffusion",
                 "--no_pretrain",
-                "--only_fold",
-                "3"
+                "--onepiece"
                 //"--initial_model",
                 //"/Users/onat/School/RoadSeg/temp_folder/chk.bin",
                 // "--model_download_drive_id",

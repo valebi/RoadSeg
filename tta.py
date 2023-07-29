@@ -288,12 +288,14 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
             big_image_shape = bigImage.shape
             output_image = np.full(big_image_shape[:2], np.nan)
             valid_entries = np.zeros(big_image_shape[:2])
+            """
             plt.imshow(bigImage[:, :, :3])
             plt.show()
             plt.imshow(bigImage[:, :, 3])
             plt.show()
             plt.imshow(bigImage[:, :, 4])
             plt.show()
+            """
             for rotation, scale, flip in itertools.product(rotations, scales, flips):
                 print("rotation: ", rotation, "scale: ", scale, "flip: ", flip)
                 if not CFG.partial_diffusion:
@@ -371,9 +373,12 @@ def main(CFG: Namespace):
         CFG.smp_backbone = "timm-regnety_080"
         CFG.smp_model = "Unet"
         CFG.device = "cuda:0"
+        CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-X"
+
     else:
         CFG.smp_backbone = "efficientnet-b7"
         CFG.smp_model = "UnetPlusPlus"
+
     CFG.train_batch_size = 32
     CFG.val_batch_size = 64
     CFG.experiment_name = "partial"
@@ -382,8 +387,9 @@ def main(CFG: Namespace):
     print(f"Loading weights from {CFG.initial_model} & folds")
 
     for fold in range(5):
-        # CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
-        CFG.initial_model = CFG.initial_model.replace("-fold-*.bin", f"-fold-{fold}.bin")
+        CFG.initial_model = (
+            CFG.initial_model.split("finetune-fold-")[0] + f"finetune-fold-{fold}.bin"
+        )
         if os.path.isfile(CFG.initial_model):
             model = build_model(CFG, num_classes=2)
             generate_predictions(model, CFG, fold=fold, run_inf=True)

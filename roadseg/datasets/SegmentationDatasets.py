@@ -509,6 +509,7 @@ class OnepieceCILDataset(SegmentationDataset):
         img, lbl = patch[:, :, :3], patch[:, :, 3:]
 
         # crop to correct size
+        used_only_target_tile = False
         if self.crop is not None:
             if np.random.rand() < 0.66:
                 aug = self.crop(image=img, mask=lbl)
@@ -523,6 +524,7 @@ class OnepieceCILDataset(SegmentationDataset):
                     margin_x_before : margin_x_before + self.size,
                     margin_y_before : margin_y_before + self.size,
                 ]
+                used_only_target_tile = True
 
             lbl[:, :, 1] = (lbl[:, :, 1] > 124) * 255
         # get into channels_first format
@@ -537,7 +539,7 @@ class OnepieceCILDataset(SegmentationDataset):
 
         # @TODO make this not break on diffusion
         if self.add_t0_mask:
-            if np.random.rand() < 0.5:
+            if np.random.rand() < 0.5 and not used_only_target_tile:
                 partial_input_mask = lbl[1:2] * lbl[2:]  # known and not part of target tile
             elif np.random.rand() < 0.5:
                 partial_input_mask = lbl[1:2] * (1 - lbl[2:])  # known and part of target tile

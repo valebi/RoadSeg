@@ -53,6 +53,18 @@ def train_one_epoch(
         labels = labels.to(device, dtype=torch.long)
         labels, loss_mask = labels[:, 0], labels[:, 1]
 
+        """
+        plt.subplot(1,4,1)
+        plt.imshow(images[0,:3].cpu().numpy().transpose(1, 2, 0))
+        plt.subplot(1,4,2)
+        plt.imshow(images[0, 3].cpu().numpy())
+        plt.subplot(1,4,3)
+        plt.imshow(images[0, 4].cpu().numpy())
+        plt.subplot(1,4,4)
+        plt.imshow(labels[0].cpu().numpy())
+        plt.show()
+        """
+
         batch_size = images.size(0)
 
         with amp.autocast(enabled=True):
