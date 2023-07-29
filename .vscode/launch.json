@@ -56,6 +56,48 @@
                 // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
                 // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
             ]
+        },
+        {
+            "name": "Onat Local Debug",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "justMyCode": false,
+            "args": [
+                "--experiment_tag",
+                "local_debug",
+                "--device",
+                "cpu",
+                "--datasets",
+                "google" ,
+                "--smp_model","DeepLabV3+",
+                "--smp_backbone","timm-regnety_320",
+                // "--smp_encoder_init_weights","imagenet",
+                "--decoder_depth","4" ,
+                "--img_size","40" ,
+                "--pretraining_epochs","40" ,
+                "--finetuning_epochs", "60",
+                "--pretraining_lr", "0.0005",
+                "--finetuning_lr","0.00007",
+                "--min_lr","0.0000005",
+                "--metrics_to_watch", "iou", "f1" ,"precision" ,"recall" ,"compf1",
+                "--pretraining_loss","patchgan_dice",
+                "--finetuning_loss","patchgan_dice",
+                "--scheduler","cosine",
+                "--scheduler_warmup_iters","200",
+                "--train_batch_size","2",
+                "--val_batch_size", "2",
+                "--initial_model","temp_folder/chk.bin",
+                // "--model_download_drive_id","1kxvCoPrOKSZG4ARrDGRP7c14-5oL9yow",
+                // "--discriminator_download_drive_id","1c6RhbklRIUpOEI8DrxUoTXwTa4rgo9VK",
+            ]
+        },
+        {
+            "name": "Python: Debug Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "justMyCode": true,
         }
     ]
 }

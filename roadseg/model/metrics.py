@@ -6,6 +6,8 @@ import torch.nn as nn
 import torchmetrics
 import torchmetrics.classification
 
+from .losses import DiceDisc, PatchGANDiscriminatorLoss
+
 # @TODO: CLEANUP
 ##These all throws errors? Fixed versions below
 JaccardLoss = smp.losses.JaccardLoss(mode="multilabel")
@@ -67,7 +69,7 @@ def reg_f1_loss(y_pred, y_true):
     )  # + 0.5*DiceLoss(y_pred, y_true)
 
 
-def get_loss(name: str):
+def get_loss(name: str, device = None):
     loss_dict = {
         "bce": BCELoss,
         "reg_f1": reg_f1_loss,
@@ -78,6 +80,8 @@ def get_loss(name: str):
         ),  ##Per image does not change the result
         "smp_tversky": smp.losses.TverskyLoss(mode="multiclass"),
         "smp_soft_ce": smp.losses.SoftCrossEntropyLoss(smooth_factor=0.1),
+        "patchgan_disc" : PatchGANDiscriminatorLoss(discriminator_lr = 0.001, device=device, discriminator_init_weights="discriminator.pth"),
+        "patchgan_dice" : DiceDisc(discriminator_lr= 0.00005, device=device, discriminator_init_weights="discriminator.pth"),
     }
 
     loss = loss_dict.get(name, None)

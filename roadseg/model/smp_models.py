@@ -56,6 +56,9 @@ def build_model(CFG, num_classes):
             activation=None,
         )
     elif CFG.smp_model == "DeepLabV3+":
+        ##Only these fixed parameters are supported for now(by Ahmet's Code).
+        decoder_channels = 256
+        encoder_depth = 5
         model = smp.DeepLabV3Plus(
             encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
             encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
@@ -70,7 +73,7 @@ def build_model(CFG, num_classes):
 
     if CFG.initial_model:
         try:
-            state_dict = torch.load(CFG.initial_model)
+            state_dict = torch.load(CFG.initial_model, map_location=CFG.device)
         except FileNotFoundError:
             raise FileNotFoundError(f"Model weights file {CFG.initial_model} not found.")
 

@@ -296,7 +296,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         optimizer, CFG, is_finetuning=False, n_train_batches=len(train_loader)
     )
     if CFG.wandb:
-        wandb.watch(model, criterion=get_loss(CFG.pretraining_loss), log_freq=7000)
+        wandb.watch(model, criterion=get_loss(CFG.pretraining_loss, device= CFG.device), log_freq=7000)
 
     progress_log_file = open(os.path.join(CFG.log_dir, f"{model_name}_progress.log"), "a") if CFG.log_to_file else None
 
@@ -307,7 +307,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
         scheduler,
         train_loader,
         val_loader,
-        criterion=get_loss(CFG.pretraining_loss),
+        criterion=get_loss(CFG.pretraining_loss, device= CFG.device),
         device=CFG.device,
         use_wandb=CFG.wandb,
         log_dir=CFG.log_dir,
@@ -332,7 +332,7 @@ def pretrain_model(CFG, model, train_loader, val_loader):
 def evaluate_finetuning(pretrained_model, comp_splits, CFG):
     scores_to_watch = []
     for fold, (train_loader, val_loader) in enumerate(comp_splits):
-        model = copy.deepcopy(pretrained_model)
+        model = copy.deepcopy(pretrained_model).to(CFG.device)
         model_name = f"finetune-fold-{fold}"
         optimizer = optim.Adam(
             model.parameters(), lr=CFG.finetuning_lr, weight_decay=CFG.weight_decay
@@ -348,7 +348,7 @@ def evaluate_finetuning(pretrained_model, comp_splits, CFG):
             scheduler,
             train_loader,
             val_loader,
-            criterion=get_loss(CFG.finetuning_loss),
+            criterion=get_loss(CFG.finetuning_loss, device= CFG.device),
             device=CFG.device,
             use_wandb=CFG.wandb,
             log_dir=CFG.log_dir,
