@@ -49,7 +49,8 @@ def main(CFG: Namespace):
         download_file_from_google_drive(file_id, destination)
         logging.info(f"Downloaded model to {destination}.")
 
-    model = build_model(CFG, num_classes=2).to(CFG.device)
+    if not(CFG.no_pretrain and CFG.no_finetune):
+        model = build_model(CFG, num_classes=2).to(CFG.device)
 
     if CFG.debug:
         imgs, msks = next(iter(train_loader))
@@ -69,9 +70,10 @@ def main(CFG: Namespace):
         model = pretrain_model(CFG, model, train_loader, val_loader)
         gc.collect()  ##Might be useful to garbage collect before we start fine tuning
 
-    logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
-    avg_score = evaluate_finetuning(model, test_splits, CFG)
-    logging.info(f"Average {CFG.metrics_to_watch[0]} scores of folds: {avg_score}.")
+    if not CFG.no_finetune:
+        logging.info(f"Finetuning on {len(test_splits[0][0])*CFG.train_batch_size} samples")
+        avg_score = evaluate_finetuning(model, test_splits, CFG)
+        logging.info(f"Average {CFG.metrics_to_watch[0]} scores of folds: {avg_score}.")
 
     if CFG.tta:
         apply_tta(CFG)
