@@ -65,6 +65,37 @@
                 // "1HvnM02Zimq_DspftGFz5ziPD-HWWhERL"
                 // https://drive.google.com/file/d/1HvnM02Zimq_DspftGFz5ziPD-HWWhERL/view?usp=drive_link
             ]
+        },
+        {
+            "name": "Valentin local TTA",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tta.py",
+            "justMyCode": false,
+            "args": [
+                // "--log_to_file",
+                "--experiment_tag",
+                "local_tta",
+                "--device",
+                "cpu",
+                "--smp_backbone",
+                "efficientnet-b7",
+                "--smp_model",
+                "UnetPlusPlus",
+                "--img_size",
+                "416",
+                "--decoder_depth",
+                "5",
+                "--slim",
+                "--initial_model",
+                "logs/partial/weights/best_epoch-finetune-fold-0.bin",
+                "--onepiece",
+                "--partial_diffusion",
+                "--train_batch_size",
+                "2",
+                "--val_batch_size",
+                "2"
+            ]
         }
     ]
 }

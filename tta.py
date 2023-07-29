@@ -1,28 +1,27 @@
+import glob
 import itertools
-from argparse import Namespace
 import os
-from albumentations import Resize
+import pickle
+from argparse import Namespace
 
+import matplotlib.pyplot as plt
+import numpy as np
 import PIL
 import torch
+from albumentations import Resize
 from PIL import Image
-import pickle
+from scipy.ndimage import rotate, zoom
 
+from roadseg.datasets.SegmentationDatasets import OnepieceCILDataset
 from roadseg.inference_diffusion import make_ensemble, make_submission
 from roadseg.model.smp_models import build_model
-from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
-from roadseg.datasets.SegmentationDatasets import OnepieceCILDataset
-import numpy as np
-import matplotlib.pyplot as plt
-import glob
-
-import numpy as np
-from scipy.ndimage import rotate, zoom
 from roadseg.utils.mask_to_submission import (
     mask_to_submission_strings,
     masks_to_submission,
     save_mask_as_img,
 )
+from roadseg.utils.utils import download_file_from_google_drive, finalize, setup
+
 
 def get_image_patches_from_top_right(image, patch_size):
     height, width = image.shape[:2]
@@ -40,6 +39,7 @@ def get_image_patches_from_top_right(image, patch_size):
 
     return patch_list, patch_positions
 
+
 def get_image_patches_from_bottom_left(image, patch_size):
     height, width = image.shape[:2]
     patch_list = []
@@ -55,6 +55,7 @@ def get_image_patches_from_bottom_left(image, patch_size):
                 patch_positions.append((start_y, start_x))
 
     return patch_list, patch_positions
+
 
 def get_image_patches_from_bottom_right(image, patch_size):
     height, width = image.shape[:2]
@@ -72,6 +73,7 @@ def get_image_patches_from_bottom_right(image, patch_size):
 
     return patch_list, patch_positions
 
+
 def get_image_patches(image, patch_size, initial_shift_x, initial_shift_y):
     height, width = image.shape[:2]
     patch_list = []
@@ -88,6 +90,7 @@ def get_image_patches(image, patch_size, initial_shift_x, initial_shift_y):
 
     return patch_list, patch_positions
 
+
 def assemble_image(patches, patch_positions, output_shape, ca_length):
     output_image = np.full(output_shape, np.nan)
 
@@ -102,14 +105,16 @@ def assemble_image(patches, patch_positions, output_shape, ca_length):
 
         top_border_distance = start_y
         left_border_distance = start_x
-        bottom_border_distance = output_y  - end_y
+        bottom_border_distance = output_y - end_y
         right_border_distance = output_x - end_x
-        distance = min(top_border_distance, bottom_border_distance, left_border_distance, right_border_distance)
+        distance = min(
+            top_border_distance, bottom_border_distance, left_border_distance, right_border_distance
+        )
 
-        ca_dist_from_border = int((patch_length - ca_length)/2)
+        ca_dist_from_border = int((patch_length - ca_length) / 2)
         linear_cadfb = min(distance, ca_dist_from_border)
-        #linear_cadfb = 0
-#---------------------- PUT THE  IMAGE IN OUTPUT  ----------------------------
+        # linear_cadfb = 0
+        # ---------------------- PUT THE  IMAGE IN OUTPUT  ----------------------------
         o_y1 = start_y + linear_cadfb
         o_y2 = end_y - linear_cadfb
         o_x1 = start_x + linear_cadfb
@@ -120,13 +125,14 @@ def assemble_image(patches, patch_positions, output_shape, ca_length):
         p_x1 = linear_cadfb
         p_x2 = patch_length - linear_cadfb
 
-        #print all above variables
-        #print("o_y1: ", o_y1, "o_y2: ", o_y2, "o_x1: ", o_x1, "o_x2: ", o_x2)
-        #print("p_y1: ", p_y1, "p_y2: ", p_y2, "p_x1: ", p_x1, "p_x2: ", p_x2)
+        # print all above variables
+        # print("o_y1: ", o_y1, "o_y2: ", o_y2, "o_x1: ", o_x1, "o_x2: ", o_x2)
+        # print("p_y1: ", p_y1, "p_y2: ", p_y2, "p_x1: ", p_x1, "p_x2: ", p_x2)
 
-        output_image[o_y1: o_y2, o_x1: o_x2] = patch[p_y1: p_y2, p_x1: p_x2]
+        output_image[o_y1:o_y2, o_x1:o_x2] = patch[p_y1:p_y2, p_x1:p_x2]
 
     return output_image
+
 
 def run_inference(imgs, CFG, model, road_class=1):
     imgs = np.asarray(imgs).transpose([0, 3, 1, 2]).astype(np.float32)
@@ -143,6 +149,7 @@ def run_inference(imgs, CFG, model, road_class=1):
     pred = pred.astype(np.uint8)
     return pred
 
+
 def predict_shifted(bigImage, CFG, model, shift, result_zone):
     big_image_shape = bigImage.shape
     output_image = np.full(big_image_shape[:2], np.nan)
@@ -151,42 +158,56 @@ def predict_shifted(bigImage, CFG, model, shift, result_zone):
     for initial_shift_x in range(0, CFG.img_size, shift):
         for initial_shift_y in range(0, CFG.img_size, shift):
             # get the shifted patches from the test images
-            patches, positions = get_image_patches(bigImage[:, :, :3], CFG.img_size, initial_shift_x, initial_shift_y)
+            patches, positions = get_image_patches(
+                bigImage, CFG.img_size, initial_shift_x, initial_shift_y
+            )
             print("patches are generated")
             print("number of patches: ", len(patches))
             # turn it into a torch tensor and predict the outcome
             patch_labels = run_inference(patches, CFG, model, road_class=1)
             print("patch labels are generated")
 
-            assembled_img = assemble_image(patch_labels, positions, big_image_shape[:2], result_zone)
-            output_image = np.where(np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img))
+            assembled_img = assemble_image(
+                patch_labels, positions, big_image_shape[:2], result_zone
+            )
+            output_image = np.where(
+                np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img)
+            )
             valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
 
-            print(f"assembled image and added to big labels, shift_x : {initial_shift_x}, shift_y : {initial_shift_y}")
+            print(
+                f"assembled image and added to big labels, shift_x : {initial_shift_x}, shift_y : {initial_shift_y}"
+            )
 
-    #since we scaled the following is to make sure there are no nan values
-    patches, positions = get_image_patches_from_bottom_right(bigImage[:, :, :3], CFG.img_size)
+    # since we scaled the following is to make sure there are no nan values
+    patches, positions = get_image_patches_from_bottom_right(bigImage, CFG.img_size)
     patch_labels = run_inference(patches, CFG, model, road_class=1)
     assembled_img = assemble_image(patch_labels, positions, big_image_shape[:2], result_zone)
-    output_image = np.where(np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img))
+    output_image = np.where(
+        np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img)
+    )
     valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
 
-    patches, positions = get_image_patches_from_bottom_left(bigImage[:, :, :3], CFG.img_size)
+    patches, positions = get_image_patches_from_bottom_left(bigImage, CFG.img_size)
     patch_labels = run_inference(patches, CFG, model, road_class=1)
     assembled_img = assemble_image(patch_labels, positions, big_image_shape[:2], result_zone)
-    output_image = np.where(np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img))
+    output_image = np.where(
+        np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img)
+    )
     valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
 
-    patches, positions = get_image_patches_from_top_right(bigImage[:, :, :3], CFG.img_size)
+    patches, positions = get_image_patches_from_top_right(bigImage, CFG.img_size)
     patch_labels = run_inference(patches, CFG, model, road_class=1)
     assembled_img = assemble_image(patch_labels, positions, big_image_shape[:2], result_zone)
-    output_image = np.where(np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img))
+    output_image = np.where(
+        np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img)
+    )
     valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
 
-    #count the number of valid entries
+    # count the number of valid entries
     nan_count = np.count_nonzero(np.isnan(output_image))
     print("nan count: ", nan_count)
-    #double check
+    # double check
     non_nan_count = np.count_nonzero(valid_entries)
     print("non nan count double check: ", non_nan_count)
     print("output image shape: ", output_image.shape)
@@ -194,6 +215,7 @@ def predict_shifted(bigImage, CFG, model, shift, result_zone):
     output_image = output_image / valid_entries
     print("predicted image is generated")
     return output_image
+
 
 def transform_back_image(img, rotation, scale, flip):
     nan_count = np.count_nonzero(np.isnan(img))
@@ -203,38 +225,39 @@ def transform_back_image(img, rotation, scale, flip):
     else:
         unflipped_img = np.flip(img, flip)
 
-    height = int(img.shape[0]/scale[0])
-    width = int(img.shape[1]/scale[1])
+    height = int(img.shape[0] / scale[0])
+    width = int(img.shape[1] / scale[1])
     resize_transform = Resize(height, width)
-    unscaled_img = resize_transform(image=unflipped_img)['image']
+    unscaled_img = resize_transform(image=unflipped_img)["image"]
 
     unrotated_img = rotate(unscaled_img, -rotation)  # inverse of rotation is -rotation
     print("transformed back image shape: ", unrotated_img.shape)
-    #plot_image(unrotated_img)
+    # plot_image(unrotated_img)
     return unrotated_img
 
+
 def transform_image(img, rotation, scale, flip):
-    #plot_image(img)
+    # plot_image(img)
     rotated_img = np.zeros_like(img)
     for i in range(img.shape[2]):
         rotated_img[:, :, i] = rotate(img[:, :, i], rotation)
-    #plot_image(rotated_img)
-    height = int(img.shape[0]*scale[0])
-    width = int(img.shape[1]*scale[1])
+    # plot_image(rotated_img)
+    height = int(img.shape[0] * scale[0])
+    width = int(img.shape[1] * scale[1])
     resize_transform = Resize(height, width)
-    scaled_img = resize_transform(image=rotated_img)['image']
-    #plot_image(scaled_img)
+    scaled_img = resize_transform(image=rotated_img)["image"]
+    # plot_image(scaled_img)
     if flip == -1:
         flipped_img = scaled_img
     else:
         flipped_img = np.flip(scaled_img, flip)
     print("transformed image shape: ", flipped_img.shape)
-    #plot_image(flipped_img)
+    # plot_image(flipped_img)
     return flipped_img
+
 
 @torch.no_grad()
 def generate_predictions(model, CFG, fold="", run_inf=True):
-
     model.to(CFG.device)
     model.eval()
 
@@ -243,36 +266,49 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
 
     # print(big_image_shape)
     if os.path.isfile(os.path.join(CFG.out_dir, "onePieceData.pickle")):
-        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), 'rb') as f:
+        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), "rb") as f:
             onePieceData = pickle.load(f)
     else:
         onePieceData = OnepieceCILDataset(CFG)
-        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), 'wb') as f:
+        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), "wb") as f:
             pickle.dump(onePieceData, f)
 
-
     result_zone = 400
-    shift = 70#50
+    shift = 70  # 50
     rotations = [0]
-    scales = [[0.7, 0.7], [0.75, 0.75], [0.8, 0.8], [0.85, 0.85], [0.9, 0.9], [0.95, 0.95], [1, 1]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
-    flips = [-1] # [0, 1]
-
+    scales = [
+        [1, 1]
+    ]  # [[0.7, 0.7], [0.75, 0.75], [0.8, 0.8], [0.85, 0.85], [0.9, 0.9], [0.95, 0.95], [1, 1]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
+    flips = [-1]  # [0, 1]
 
     if run_inf:
         print(f"starting to generate predictions fold : {fold}")
         averagedLabels = []
         for bigImage in [onePieceData.img1, onePieceData.img2]:
-
             big_image_shape = bigImage.shape
             output_image = np.full(big_image_shape[:2], np.nan)
             valid_entries = np.zeros(big_image_shape[:2])
-
-            for(rotation, scale, flip) in itertools.product(rotations, scales, flips):
+            plt.imshow(bigImage[:, :, :3])
+            plt.show()
+            plt.imshow(bigImage[:, :, 3])
+            plt.show()
+            plt.imshow(bigImage[:, :, 4])
+            plt.show()
+            for rotation, scale, flip in itertools.product(rotations, scales, flips):
                 print("rotation: ", rotation, "scale: ", scale, "flip: ", flip)
-                transformed_Image = transform_image(bigImage[:, :, :3], rotation, scale, flip)
+                if not CFG.partial_diffusion:
+                    # color only
+                    transformed_Image = transform_image(bigImage[:, :, :3], rotation, scale, flip)
+                else:
+                    # color + known mask
+                    transformed_Image = transform_image(bigImage, rotation, scale, flip)
                 predicted = predict_shifted(transformed_Image, CFG, model, shift, result_zone)
                 assembled_img = transform_back_image(predicted, rotation, scale, flip)
-                output_image = np.where(np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img))
+                output_image = np.where(
+                    np.isnan(output_image),
+                    assembled_img,
+                    output_image + np.nan_to_num(assembled_img),
+                )
                 valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
 
             output_image = output_image / valid_entries
@@ -286,14 +322,15 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
             averagedLabels = pickle.load(f)
 
     img_files = sorted([f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")])
-    for index , img_file in enumerate(img_files):
+    for index, img_file in enumerate(img_files):
         # Add 144 to get the test image labels
         print("image number: ", index)
-        big_img_nr, (i, j) = onePieceData.loc_dict[index+144]
-        image_label = averagedLabels[big_img_nr - 1][i:i+400, j:j+400]
-        #save the image
+        big_img_nr, (i, j) = onePieceData.loc_dict[index + 144]
+        image_label = averagedLabels[big_img_nr - 1][i : i + 400, j : j + 400]
+        # save the image
         img = PIL.Image.fromarray(image_label.astype(np.uint8))
         img.save(os.path.join(dirname, img_file))
+
 
 def print_average_labels(CFG):
     with open(os.path.join(CFG.out_dir, "averagedLabels.pkl"), "rb") as f:
@@ -302,45 +339,63 @@ def print_average_labels(CFG):
         img = PIL.Image.fromarray(averagedLabels[i].astype(np.uint8))
         img.save(os.path.join(CFG.out_dir, f"averagedLabels{i}.png"))
 
+
 def apply_tta(CFG: Namespace):
     for fold in range(5):
         if CFG.no_finetune:
-            CFG.initial_model = os.path.join(CFG.finetuned_weights_dir, f"best_epoch-finetune-fold-{fold}.bin")
+            CFG.initial_model = os.path.join(
+                CFG.finetuned_weights_dir, f"best_epoch-finetune-fold-{fold}.bin"
+            )
         else:
-            CFG.initial_model = os.path.join(CFG.log_dir,  f"weights/best_epoch-finetune-fold-{fold}.bin")
+            CFG.initial_model = os.path.join(
+                CFG.log_dir, f"weights/best_epoch-finetune-fold-{fold}.bin"
+            )
         model = build_model(CFG, num_classes=2)
         generate_predictions(model, CFG, fold=fold, run_inf=True)
+
 
 def plot_image(img):
     plt.imshow(img)
-    plt.axis('off')  # Remove axes
+    plt.axis("off")  # Remove axes
     plt.show()
+
 
 def main(CFG: Namespace):
     """Main function."""
-    CFG.out_dir = "/home/ahmet/Documents/RoadSeg/output"
-    CFG.test_imgs_dir = "/home/ahmet/Documents/RoadSeg/data/ethz-cil-road-segmentation-2023/test/images"
-    CFG.data_dir = "/home/ahmet/Documents/RoadSeg/data"
-    CFG.smp_backbone = "timm-regnety_080"
-    CFG.smp_model = "Unet"
-    CFG.device = "cuda:0"
+    if False:
+        CFG.out_dir = "/home/ahmet/Documents/RoadSeg/output"
+        CFG.test_imgs_dir = (
+            "/home/ahmet/Documents/RoadSeg/data/ethz-cil-road-segmentation-2023/test/images"
+        )
+        CFG.data_dir = "/home/ahmet/Documents/RoadSeg/data"
+        CFG.smp_backbone = "timm-regnety_080"
+        CFG.smp_model = "Unet"
+        CFG.device = "cuda:0"
+    else:
+        CFG.smp_backbone = "efficientnet-b7"
+        CFG.smp_model = "UnetPlusPlus"
     CFG.train_batch_size = 32
     CFG.val_batch_size = 64
-    CFG.experiment_name = "basic TTA + scale between 1 and 1.25"
+    CFG.experiment_name = "partial"
+    CFG.partial_diffusion = True
 
     for fold in range(5):
-        CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
-        model = build_model(CFG, num_classes=2)
-        generate_predictions(model, CFG, fold=fold, run_inf=True)
-        print_average_labels(CFG)
-
+        # CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
+        CFG.initial_model = f"logs/partial/weights/best_epoch-finetune-fold-{fold}.bin"
+        if os.path.isfile(CFG.initial_model):
+            model = build_model(CFG, num_classes=2)
+            generate_predictions(model, CFG, fold=fold, run_inf=True)
+            print_average_labels(CFG)
+        else:
+            print("weights not found for fold: ", fold)
 
     make_ensemble(CFG)
 
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
     masks_to_submission(CFG.submission_file, "", *image_filenames)
 
-    make_submission(CFG)
+    # make_submission(CFG)
+
 
 if __name__ == "__main__":
     args = setup()
