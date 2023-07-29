@@ -257,6 +257,7 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
     scales = [[0.8,0.8], [0.9,0.9], [1, 1], [1.1, 1.1], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
     flips = [0, 1, -1] # [0, 1]
 
+
     if run_inf:
         print(f"starting to generate predictions fold : {fold}")
         averagedLabels = []
