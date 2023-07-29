@@ -74,7 +74,7 @@
                 "--smp_backbone","timm-regnety_320",
                 // "--smp_encoder_init_weights","imagenet",
                 "--decoder_depth","4" ,
-                "--img_size","40" ,
+                "--img_size","48" ,
                 "--pretraining_epochs","40" ,
                 "--finetuning_epochs", "60",
                 "--pretraining_lr", "0.0005",
