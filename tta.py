@@ -250,11 +250,13 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
         with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), 'wb') as f:
             pickle.dump(onePieceData, f)
 
+
     result_zone = 400
     shift = 70#50
     rotations = [0]
     scales = [[0.7, 0.7], [0.75, 0.75], [0.8, 0.8], [0.85, 0.85], [0.9, 0.9], [0.95, 0.95], [1, 1]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
     flips = [-1] # [0, 1]
+
 
     if run_inf:
         print(f"starting to generate predictions fold : {fold}")
