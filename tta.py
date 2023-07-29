@@ -381,7 +381,7 @@ def main(CFG: Namespace):
 
     for fold in range(5):
         # CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-{fold}.bin"
-        CFG.initial_model = f"logs/partial/weights/best_epoch-finetune-fold-{fold}.bin"
+        CFG.initial_model = CFG.initial_model.replace("-fold-*.bin", f"-fold-{fold}.bin")
         if os.path.isfile(CFG.initial_model):
             model = build_model(CFG, num_classes=2)
             generate_predictions(model, CFG, fold=fold, run_inf=True)
