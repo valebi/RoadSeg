@@ -33,7 +33,6 @@
                 "google",
                 "--max_per_dataset",
                 "10",
-                "--make_submission",
                 "--num_workers",
                 "2",
                 "--img_size",
@@ -58,7 +57,9 @@
                 "precision",
                 "recall",
                 "iou",
-                "--no_pretrain"
+                "--no_pretrain",
+                "--only_fold",
+                "3"
                 //"--initial_model",
                 //"/Users/onat/School/RoadSeg/temp_folder/chk.bin",
                 // "--model_download_drive_id",

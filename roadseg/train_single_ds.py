@@ -348,6 +348,8 @@ def pretrain_model(CFG, model, train_loader, val_loader):
 def evaluate_finetuning(pretrained_model, comp_splits, CFG):
     scores_to_watch = []
     for fold, (train_loader, val_loader) in enumerate(comp_splits):
+        if CFG.only_fold != -1 and fold != CFG.only_fold:
+            continue
         model = copy.deepcopy(pretrained_model)
         model_name = f"finetune-fold-{fold}"
         optimizer = optim.NAdam(
