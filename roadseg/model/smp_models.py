@@ -91,7 +91,7 @@ def build_model(CFG, num_classes):
         del state_dict, filtered_keys
 
     model.to(CFG.device)
-    model = nn.DataParallel(model)
+    # model = nn.DataParallel(model)
     return model
 
 
