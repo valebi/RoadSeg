@@ -15,6 +15,7 @@ from scipy.ndimage import rotate, zoom
 from roadseg.datasets.SegmentationDatasets import OnepieceCILDataset
 from roadseg.inference_diffusion import make_ensemble, make_submission
 from roadseg.model.smp_models import build_model
+from roadseg.utils.augmentations import get_soft_color_albumentations
 from roadseg.utils.mask_to_submission import (
     mask_to_submission_strings,
     masks_to_submission,
@@ -150,7 +151,7 @@ def run_inference(imgs, CFG, model, road_class=1):
     return pred
 
 
-def predict_shifted(bigImage, CFG, model, shift, result_zone):
+def predict_shifted(bigImage, CFG, model, shift, result_zone, color_transform=None):
     big_image_shape = bigImage.shape
     output_image = np.full(big_image_shape[:2], np.nan)
     valid_entries = np.zeros(big_image_shape[:2])
@@ -164,6 +165,13 @@ def predict_shifted(bigImage, CFG, model, shift, result_zone):
             print("patches are generated")
             print("number of patches: ", len(patches))
             # turn it into a torch tensor and predict the outcome
+            if color_transform is not None:
+                patches = [
+                    np.concatenate(
+                        (color_transform(image=p[:, :, :3])["image"], p[:, :, 3:]), axis=-1
+                    )
+                    for p in patches
+                ]
             patch_labels = run_inference(patches, CFG, model, road_class=1)
             print("patch labels are generated")
 
@@ -257,7 +265,9 @@ def transform_image(img, rotation, scale, flip):
 
 
 @torch.no_grad()
-def generate_predictions(model, CFG, fold="", run_inf=True):
+def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
+    color_transform = get_soft_color_albumentations(CFG) if color_aug else None
+
     model.to(CFG.device)
     model.eval()
 
@@ -285,6 +295,9 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
         print(f"starting to generate predictions fold : {fold}")
         averagedLabels = []
         for bigImage in [onePieceData.img1, onePieceData.img2]:
+            if not CFG.partial_diffusion:
+                # color only, no partial masks
+                bigImage = bigImage[:, :, :3]
             big_image_shape = bigImage.shape
             output_image = np.full(big_image_shape[:2], np.nan)
             valid_entries = np.zeros(big_image_shape[:2])
@@ -298,13 +311,10 @@ def generate_predictions(model, CFG, fold="", run_inf=True):
             """
             for rotation, scale, flip in itertools.product(rotations, scales, flips):
                 print("rotation: ", rotation, "scale: ", scale, "flip: ", flip)
-                if not CFG.partial_diffusion:
-                    # color only
-                    transformed_Image = transform_image(bigImage[:, :, :3], rotation, scale, flip)
-                else:
-                    # color + known mask
-                    transformed_Image = transform_image(bigImage, rotation, scale, flip)
-                predicted = predict_shifted(transformed_Image, CFG, model, shift, result_zone)
+                transformed_Image = transform_image(bigImage, rotation, scale, flip)
+                predicted = predict_shifted(
+                    transformed_Image, CFG, model, shift, result_zone, color_transform
+                )
                 assembled_img = transform_back_image(predicted, rotation, scale, flip)
                 output_image = np.where(
                     np.isnan(output_image),
@@ -395,7 +405,7 @@ def main(CFG: Namespace):
             generate_predictions(model, CFG, fold=fold, run_inf=True)
             print_average_labels(CFG)
         else:
-            print("weights not found for fold: ", fold)
+            print("weights not found for fold: ", fold, "under", CFG.initial_model)
 
     make_ensemble(CFG)
 

@@ -1,6 +1,19 @@
 import albumentations as A
 
 
+def get_soft_color_albumentations(CFG):
+    return A.OneOf(
+        [
+            A.RandomBrightnessContrast(p=1.0),
+            A.RandomGamma(gamma_limit=(40, 450), p=1.0),
+            A.CLAHE(p=1.0),
+            A.HueSaturationValue(p=1.0),
+            A.RGBShift(p=1),
+        ],
+        p=0.25,
+    )
+
+
 def get_albumentations(CFG):
     """Returns a composite albumentation augmentation to be applied to the training images."""
     transforms = A.Compose(

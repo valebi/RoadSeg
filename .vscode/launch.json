@@ -89,7 +89,7 @@
                 "5",
                 "--slim",
                 "--initial_model",
-                "logs/partial/weights/best_epoch-finetune-fold-0.bin",
+                "logs/partial/best_epoch-finetune-fold-0.bin",
                 "--onepiece",
                 "--partial_diffusion",
                 "--train_batch_size",
