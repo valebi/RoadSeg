@@ -318,7 +318,7 @@ def generate_predictions(model, CFG, fold=""):
 
     result_zone = 350
     shift = 70#70
-    rotations = [90]#[0, 90, 180, 270]
+    rotations = [0, 90, 180, 270]
     scales = [[0.8, 0.8], [0.9, 0.9], [0.95, 0.95], [1.05, 1.05], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
     flips = [0 , 1]
 
