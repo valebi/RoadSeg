@@ -63,7 +63,7 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False,
+            drop_last=True,
         )
         # val dataset is shuffled to get random plots
         comp_val_loader = DataLoader(
@@ -72,7 +72,7 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False,
+            drop_last=True,
         )
         comp_splits.append((comp_train_loader, comp_val_loader))
     return train_loader, val_loader, comp_splits
