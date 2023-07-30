@@ -317,10 +317,10 @@ def generate_predictions(model, CFG, fold=""):
 
 
     result_zone = 350
-    shift = 70#50
-    rotations = [0, 90, 180, 270]
+    shift = 70#70
+    rotations = [90]#[0, 90, 180, 270]
     scales = [[0.8, 0.8], [0.9, 0.9], [0.95, 0.95], [1.05, 1.05], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
-    flips = [0 , 1] # [0, 1]
+    flips = [0 , 1]
 
 
     print(f"starting to generate predictions fold : {fold}")
@@ -333,6 +333,8 @@ def generate_predictions(model, CFG, fold=""):
         averagedLabels.append(output_image)
         print("averaged labels are generated")
 
+    print_average_labels(averagedLabels, CFG)
+
     img_files = sorted([f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")])
     for index , img_file in enumerate(img_files):
         # Add 144 to get the test image labels
@@ -340,15 +342,15 @@ def generate_predictions(model, CFG, fold=""):
         big_img_nr, (i, j) = onePieceData.loc_dict[index+144]
         resize_transform = Resize(400 * 12, 400 * 12)
         scaled_img = resize_transform(image=averagedLabels[big_img_nr - 1])['image']
+        i = int(i* 400 / CFG.img_size)
+        j = int(j * 400 / CFG.img_size)
         image_label = scaled_img[i:i+400, j:j+400]
 
         #save the image
         img = PIL.Image.fromarray(image_label.astype(np.uint8))
         img.save(os.path.join(dirname, img_file))
 
-def print_average_labels(CFG):
-    with open(os.path.join(CFG.out_dir, "averagedLabels.pkl"), "rb") as f:
-        averagedLabels = pickle.load(f)
+def print_average_labels(averagedLabels, CFG: Namespace):
     for i in range(2):
         img = PIL.Image.fromarray(averagedLabels[i].astype(np.uint8))
         img.save(os.path.join(CFG.out_dir, f"averagedLabels{i}.png"))
@@ -372,19 +374,20 @@ def main(CFG: Namespace):
     CFG.out_dir = "/home/ahmet/Documents/CIL Project/RoadSeg/output"
     CFG.test_imgs_dir = "/home/ahmet/Documents/CIL Project/RoadSeg/data/ethz-cil-road-segmentation-2023/test/images"
     CFG.data_dir = "/home/ahmet/Documents/CIL Project/RoadSeg/data"
-    CFG.smp_backbone = "timm-regnety_080"
-    CFG.smp_model = "Unet"
+    CFG.smp_backbone = "efficientnet-b7"
+    CFG.smp_model = "UnetPlusPlus"
+    CFG.slim = True
+    CFG.decoder_depth = 5
+    CFG.img_size = 416
     CFG.device = "cuda:0"
-    CFG.train_batch_size = 16
-    CFG.val_batch_size = 32
+    CFG.train_batch_size = 4
+    CFG.val_batch_size = 8
     CFG.experiment_name = "iterative TTA"
 
     for fold in range(5):
-        CFG.initial_model = f"/home/ahmet/Documents/CIL Project/Unet_timm-regnety_080_BGHER-big-regnety-150pre-dice-50ft-dice-finetuning__2023-07-20_01-30-24/scratch_logs/2023-07-20_01-30-24/weights/best_epoch-finetune-fold-{fold}.bin"
+        CFG.initial_model = f"/home/ahmet/Documents/CIL Project/e7-long/weights/best_epoch-finetune-fold-{fold}.bin"
         model = build_model(CFG, num_classes=2)
         generate_predictions(model, CFG, fold=fold)
-        print_average_labels(CFG)
-
 
     make_ensemble(CFG)
 
