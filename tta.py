@@ -442,10 +442,6 @@ def main(CFG: Namespace):
         CFG.val_batch_size = 64
         CFG.experiment_name = "partial"
 
-    else:
-        CFG.smp_backbone = "efficientnet-b7"
-        CFG.smp_model = "UnetPlusPlus"
-
     print(f"Loading weights from {CFG.initial_model} & folds")
 
     for fold in range(5):
@@ -464,7 +460,7 @@ def main(CFG: Namespace):
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
     masks_to_submission(CFG.submission_file, "", *image_filenames)
 
-    # make_submission(CFG)
+    make_submission(CFG)
 
 
 if __name__ == "__main__":
