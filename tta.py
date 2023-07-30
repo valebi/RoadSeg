@@ -264,6 +264,83 @@ def transform_image(img, rotation, scale, flip):
     return flipped_img
 
 
+def apply_transformations_iteratively(
+    model, CFG, bigImage, shift, result_zone, rotations, scales, flips
+):
+    big_image_shape = bigImage.shape
+    output_image = np.full(big_image_shape[:2], np.nan)
+    valid_entries = np.zeros(big_image_shape[:2])
+
+    for rotation in rotations:
+        print("rotation: ", rotation)
+        rotated_img = np.zeros_like(bigImage)
+        for i in range(bigImage.shape[2]):
+            rotated_img[:, :, i] = rotate(bigImage[:, :, i], rotation)
+        predicted = predict_shifted(rotated_img, CFG, model, shift, result_zone)
+        unrotated_img = rotate(predicted, -rotation)  # inverse of rotation is -rotation
+        output_image = np.where(
+            np.isnan(output_image), unrotated_img, output_image + np.nan_to_num(unrotated_img)
+        )
+        valid_entries = valid_entries + np.logical_not(np.isnan(unrotated_img)).astype(int)
+
+    for scale in scales:
+        height = int(bigImage.shape[0] * scale[0])
+        width = int(bigImage.shape[1] * scale[1])
+        resize_transform = Resize(height, width)
+        scaled_img = resize_transform(image=bigImage)["image"]
+        predicted = predict_shifted(scaled_img, CFG, model, shift, result_zone)
+
+        height = int(bigImage.shape[0])
+        width = int(bigImage.shape[1])
+        resize_transform = Resize(height, width)
+        scaled_back_img = resize_transform(image=predicted)["image"]
+        output_image = np.where(
+            np.isnan(output_image), scaled_back_img, output_image + np.nan_to_num(scaled_back_img)
+        )
+        valid_entries = valid_entries + np.logical_not(np.isnan(scaled_back_img)).astype(int)
+
+    for flip in flips:
+        if flip == -1:
+            flipped_img = bigImage
+        else:
+            flipped_img = np.flip(bigImage, flip)
+        predicted = predict_shifted(flipped_img, CFG, model, shift, result_zone)
+        if flip == -1:
+            flipped_back_img = predicted
+        else:
+            flipped_back_img = np.flip(predicted, flip)
+        output_image = np.where(
+            np.isnan(output_image), flipped_back_img, output_image + np.nan_to_num(flipped_back_img)
+        )
+        valid_entries = valid_entries + np.logical_not(np.isnan(flipped_back_img)).astype(int)
+
+    output_image = output_image / valid_entries
+
+    return output_image
+
+
+def apply_all_possible_transformations(
+    model, CFG, bigImage, shift, result_zone, rotations, scales, flips
+):
+    big_image_shape = bigImage.shape
+    output_image = np.full(big_image_shape[:2], np.nan)
+    valid_entries = np.zeros(big_image_shape[:2])
+
+    for rotation, scale, flip in itertools.product(rotations, scales, flips):
+        print("rotation: ", rotation, "scale: ", scale, "flip: ", flip)
+        transformed_Image = transform_image(bigImage, rotation, scale, flip)
+        predicted = predict_shifted(transformed_Image, CFG, model, shift, result_zone)
+        assembled_img = transform_back_image(predicted, rotation, scale, flip)
+        output_image = np.where(
+            np.isnan(output_image), assembled_img, output_image + np.nan_to_num(assembled_img)
+        )
+        valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
+
+    output_image = output_image / valid_entries
+
+    return output_image
+
+
 @torch.no_grad()
 def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
     color_transform = get_soft_color_albumentations(CFG) if color_aug else None
@@ -275,12 +352,12 @@ def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
     os.makedirs(dirname, exist_ok=True)
 
     # print(big_image_shape)
-    if os.path.isfile(os.path.join(CFG.out_dir, "onePieceData.pickle")):
-        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), "rb") as f:
+    if os.path.isfile(os.path.join(CFG.out_dir, f"onePieceData-{CFG.img_size}.pickle")):
+        with open(os.path.join(CFG.out_dir, f"onePieceData-{CFG.img_size}.pickle"), "rb") as f:
             onePieceData = pickle.load(f)
     else:
         onePieceData = OnepieceCILDataset(CFG)
-        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), "wb") as f:
+        with open(os.path.join(CFG.out_dir, f"onePieceData-{CFG.img_size}.pickle"), "wb") as f:
             pickle.dump(onePieceData, f)
 
     result_zone = 350
@@ -295,54 +372,27 @@ def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
     ]  # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
     flips = [0, 1, -1]  # [0, 1]
 
-    if run_inf:
-        print(f"starting to generate predictions fold : {fold}")
-        averagedLabels = []
-        for bigImage in [onePieceData.img1, onePieceData.img2]:
-            if not CFG.partial_diffusion:
-                # color only, no partial masks
-                bigImage = bigImage[:, :, :3]
-            big_image_shape = bigImage.shape
-            output_image = np.full(big_image_shape[:2], np.nan)
-            valid_entries = np.zeros(big_image_shape[:2])
-            """
-            plt.imshow(bigImage[:, :, :3])
-            plt.show()
-            plt.imshow(bigImage[:, :, 3])
-            plt.show()
-            plt.imshow(bigImage[:, :, 4])
-            plt.show()
-            """
-            for rotation, scale, flip in itertools.product(rotations, scales, flips):
-                print("rotation: ", rotation, "scale: ", scale, "flip: ", flip)
-                transformed_Image = transform_image(bigImage, rotation, scale, flip)
-                predicted = predict_shifted(
-                    transformed_Image, CFG, model, shift, result_zone, color_transform
-                )
-                assembled_img = transform_back_image(predicted, rotation, scale, flip)
-                output_image = np.where(
-                    np.isnan(output_image),
-                    assembled_img,
-                    output_image + np.nan_to_num(assembled_img),
-                )
-                valid_entries = valid_entries + np.logical_not(np.isnan(assembled_img)).astype(int)
-
-            output_image = output_image / valid_entries
-            averagedLabels.append(output_image)
-            print("averaged labels are generated")
-        # save the labels
-        with open(os.path.join(CFG.out_dir, "averagedLabels.pkl"), "wb") as f:
-            pickle.dump(averagedLabels, f)
-    else:
-        with open(os.path.join(CFG.out_dir, "averagedLabels.pkl"), "rb") as f:
-            averagedLabels = pickle.load(f)
+    print(f"starting to generate predictions fold : {fold}")
+    averagedLabels = []
+    for bigImage in [onePieceData.img1, onePieceData.img2]:
+        if not CFG.partial_diffusion:
+            bigImage = bigImage[:, :, :3]
+        # output_image = apply_all_possible_transformations(model, CFG, bigImage[:, :, :3], shift, result_zone, rotations, scales, flips)
+        output_image = apply_transformations_iteratively(
+            model, CFG, bigImage, shift, result_zone, rotations, scales, flips
+        )
+        averagedLabels.append(output_image)
+        print("averaged labels are generated")
 
     img_files = sorted([f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")])
     for index, img_file in enumerate(img_files):
         # Add 144 to get the test image labels
         print("image number: ", index)
         big_img_nr, (i, j) = onePieceData.loc_dict[index + 144]
-        image_label = averagedLabels[big_img_nr - 1][i : i + 400, j : j + 400]
+        resize_transform = Resize(400 * 12, 400 * 12)
+        scaled_img = resize_transform(image=averagedLabels[big_img_nr - 1])["image"]
+        image_label = scaled_img[i : i + 400, j : j + 400]
+
         # save the image
         img = PIL.Image.fromarray(image_label.astype(np.uint8))
         img.save(os.path.join(dirname, img_file))
@@ -367,7 +417,7 @@ def apply_tta(CFG: Namespace):
                 CFG.log_dir, f"weights/best_epoch-finetune-fold-{fold}.bin"
             )
         model = build_model(CFG, num_classes=2)
-        generate_predictions(model, CFG, fold=fold, run_inf=True)
+        generate_predictions(model, CFG, fold=fold)
 
 
 def plot_image(img):
@@ -414,7 +464,7 @@ def main(CFG: Namespace):
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
     masks_to_submission(CFG.submission_file, "", *image_filenames)
 
-    make_submission(CFG)
+    # make_submission(CFG)
 
 
 if __name__ == "__main__":
