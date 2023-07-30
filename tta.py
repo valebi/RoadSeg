@@ -307,20 +307,20 @@ def generate_predictions(model, CFG, fold=""):
     os.makedirs(dirname, exist_ok=True)
 
     # print(big_image_shape)
-    if os.path.isfile(os.path.join(CFG.out_dir, "onePieceData.pickle")):
-        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), 'rb') as f:
+    if os.path.isfile(os.path.join(CFG.out_dir, f"onePieceData-{CFG.img_size}.pickle")):
+        with open(os.path.join(CFG.out_dir, f"onePieceData-{CFG.img_size}.pickle"), 'rb') as f:
             onePieceData = pickle.load(f)
     else:
         onePieceData = OnepieceCILDataset(CFG)
-        with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), 'wb') as f:
+        with open(os.path.join(CFG.out_dir, f"onePieceData-{CFG.img_size}.pickle"), 'wb') as f:
             pickle.dump(onePieceData, f)
 
 
     result_zone = 400
     shift = 70#50
-    rotations = [0, 90, 180]
-    scales = [[0.7, 0.7], [0.95, 0.95], [1,1], [1.2,1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
-    flips = [0 , 1, -1] # [0, 1]
+    rotations = []#[0, 90, 180]
+    scales = [[0.7, 0.7]]#[[0.7, 0.7], [0.95, 0.95], [1,1], [1.2,1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
+    flips = []#[0 , 1, -1] # [0, 1]
 
 
     print(f"starting to generate predictions fold : {fold}")
@@ -336,7 +336,10 @@ def generate_predictions(model, CFG, fold=""):
         # Add 144 to get the test image labels
         print("image number: ", index)
         big_img_nr, (i, j) = onePieceData.loc_dict[index+144]
-        image_label = averagedLabels[big_img_nr - 1][i:i+400, j:j+400]
+        resize_transform = Resize(400 * 12, 400 * 12)
+        scaled_img = resize_transform(image=averagedLabels[big_img_nr - 1])['image']
+        image_label = scaled_img[i:i+400, j:j+400]
+
         #save the image
         img = PIL.Image.fromarray(image_label.astype(np.uint8))
         img.save(os.path.join(dirname, img_file))
