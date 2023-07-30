@@ -318,16 +318,18 @@ def generate_predictions(model, CFG, fold=""):
 
     result_zone = 350
     shift = 70#50
-    rotations = [0, 90, 180]
-    scales = [[0.8, 0.8], [0.95, 0.95], [1.05, 1.05], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
+    rotations = [0, 90, 180, 270]
+    scales = [[0.8, 0.8], [0.9, 0.9], [0.95, 0.95], [1.05, 1.05], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
     flips = [0 , 1] # [0, 1]
 
 
     print(f"starting to generate predictions fold : {fold}")
     averagedLabels = []
     for bigImage in [onePieceData.img1, onePieceData.img2]:
-        #output_image = apply_all_possible_transformations(model, CFG, bigImage[:, :, :3], shift, result_zone, rotations, scales, flips)
-        output_image = apply_transformations_iteratively(model, CFG, bigImage[:, :, :3], shift, result_zone, rotations, scales, flips)
+        if CFG.tta_all_combinations:
+            output_image = apply_all_possible_transformations(model, CFG, bigImage[:, :, :3], shift, result_zone, rotations, scales, flips)
+        else:
+            output_image = apply_transformations_iteratively(model, CFG, bigImage[:, :, :3], shift, result_zone, rotations, scales, flips)
         averagedLabels.append(output_image)
         print("averaged labels are generated")
 
