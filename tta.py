@@ -412,7 +412,7 @@ def main(CFG: Namespace):
     image_filenames = sorted(glob.glob(f"{CFG.out_dir}/ensemble/*.png"))
     masks_to_submission(CFG.submission_file, "", *image_filenames)
 
-    # make_submission(CFG)
+    make_submission(CFG)
 
 
 if __name__ == "__main__":
