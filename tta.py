@@ -283,13 +283,17 @@ def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
         with open(os.path.join(CFG.out_dir, "onePieceData.pickle"), "wb") as f:
             pickle.dump(onePieceData, f)
 
-    result_zone = 400
-    shift = 70  # 50
-    rotations = [0]
+    result_zone = 350
+    shift = 100  # 50
+    rotations = [0, 90, 180]
     scales = [
-        [1, 1]
-    ]  # [[0.7, 0.7], [0.75, 0.75], [0.8, 0.8], [0.85, 0.85], [0.9, 0.9], [0.95, 0.95], [1, 1]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
-    flips = [-1]  # [0, 1]
+        [0.8, 0.8],
+        [0.9, 0.9],
+        [1, 1],
+        [1.1, 1.1],
+        [1.2, 1.2],
+    ]  # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
+    flips = [0, 1, -1]  # [0, 1]
 
     if run_inf:
         print(f"starting to generate predictions fold : {fold}")
@@ -384,15 +388,13 @@ def main(CFG: Namespace):
         CFG.smp_model = "Unet"
         CFG.device = "cuda:0"
         CFG.initial_model = f"/home/ahmet/Documents/weightsBGHER/weights/best_epoch-finetune-fold-X"
+        CFG.train_batch_size = 32
+        CFG.val_batch_size = 64
+        CFG.experiment_name = "partial"
 
     else:
         CFG.smp_backbone = "efficientnet-b7"
         CFG.smp_model = "UnetPlusPlus"
-
-    CFG.train_batch_size = 32
-    CFG.val_batch_size = 64
-    CFG.experiment_name = "partial"
-    CFG.partial_diffusion = True
 
     print(f"Loading weights from {CFG.initial_model} & folds")
 
