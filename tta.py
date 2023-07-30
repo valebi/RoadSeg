@@ -316,7 +316,7 @@ def generate_predictions(model, CFG, fold=""):
             pickle.dump(onePieceData, f)
 
 
-    result_zone = 400
+    result_zone = 350
     shift = 70#50
     rotations = [0, 90, 180]
     scales = [[0.8, 0.8], [0.95, 0.95], [1.05, 1.05], [1.2, 1.2]] # [[0.8, 0.8, 1] , [1,1,1], [1.2, 1.2,1]]
