@@ -101,6 +101,7 @@ def parse_args() -> argparse.Namespace:
         help="Where to store the predictions. MUST'T CONTAIN ANY DIGIT!",
     )
     parser.add_argument("--tta", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--tta_all_combinations", action="store_true", help="Disable pretraining.")
     parser.add_argument(
         "--onepiece",
         action="store_true",

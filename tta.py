@@ -361,7 +361,7 @@ def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
             pickle.dump(onePieceData, f)
 
     result_zone = 350
-    shift = 100  # 50
+    shift = 50  # 50
     rotations = [0, 90, 180]
     scales = [
         [0.8, 0.8],
@@ -374,15 +374,22 @@ def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
 
     print(f"starting to generate predictions fold : {fold}")
     averagedLabels = []
+    if not CFG.partial_diffusion:
+        bigImage = bigImage[:, :, :3]
+
     for bigImage in [onePieceData.img1, onePieceData.img2]:
-        if not CFG.partial_diffusion:
-            bigImage = bigImage[:, :, :3]
-        # output_image = apply_all_possible_transformations(model, CFG, bigImage[:, :, :3], shift, result_zone, rotations, scales, flips)
-        output_image = apply_transformations_iteratively(
-            model, CFG, bigImage, shift, result_zone, rotations, scales, flips
-        )
+        if CFG.tta_all_combinations:
+            output_image = apply_all_possible_transformations(
+                model, CFG, bigImage, shift, result_zone, rotations, scales, flips
+            )
+        else:
+            output_image = apply_transformations_iteratively(
+                model, CFG, bigImage, shift, result_zone, rotations, scales, flips
+            )
         averagedLabels.append(output_image)
         print("averaged labels are generated")
+
+    print_average_labels(averagedLabels, CFG)
 
     img_files = sorted([f for f in os.listdir(CFG.test_imgs_dir) if f.endswith(".png")])
     for index, img_file in enumerate(img_files):
@@ -391,6 +398,8 @@ def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
         big_img_nr, (i, j) = onePieceData.loc_dict[index + 144]
         resize_transform = Resize(400 * 12, 400 * 12)
         scaled_img = resize_transform(image=averagedLabels[big_img_nr - 1])["image"]
+        i = int(i * 400 / CFG.img_size)
+        j = int(j * 400 / CFG.img_size)
         image_label = scaled_img[i : i + 400, j : j + 400]
 
         # save the image
@@ -398,9 +407,7 @@ def generate_predictions(model, CFG, fold="", run_inf=True, color_aug=True):
         img.save(os.path.join(dirname, img_file))
 
 
-def print_average_labels(CFG):
-    with open(os.path.join(CFG.out_dir, "averagedLabels.pkl"), "rb") as f:
-        averagedLabels = pickle.load(f)
+def print_average_labels(averagedLabels, CFG: Namespace):
     for i in range(2):
         img = PIL.Image.fromarray(averagedLabels[i].astype(np.uint8))
         img.save(os.path.join(CFG.out_dir, f"averagedLabels{i}.png"))
