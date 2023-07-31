@@ -120,6 +120,7 @@ def parse_args() -> argparse.Namespace:
         default=8,
         help="Number of workers for data loading. (torch)",
     )
+    parser.add_argument("--no_data_parallel", action="store_true", help="Disable dataparallel.")
     parser.add_argument("--no_aug", action="store_true", help="Disable augmentations.")
 
     # INFERENCE
