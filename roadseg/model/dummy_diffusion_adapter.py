@@ -15,7 +15,7 @@ class DiffusionAdapter(nn.Module):
         timesteps,
         dim=64,
         self_condition=False,
-        embed_time=False,
+        embed_time=True,
         combination_method="linear",
     ):
         super().__init__()
