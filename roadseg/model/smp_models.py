@@ -205,6 +205,8 @@ def build_model(CFG, num_classes):
         model = try_load_weights(model, CFG.initial_model, device=CFG.device)
 
     model.to(CFG.device)
+    if CFG.no_data_parallel:
+        return model
     model = nn.DataParallel(model)
     return model
 
