@@ -68,11 +68,19 @@ def reg_f1_loss(y_pred, y_true):
         y_pred, y_true
     )  # + 0.5*DiceLoss(y_pred, y_true)
 
+def patch_f1_loss(y_pred, y_true):
+    # return 0.5*BCELoss(y_pred, y_true) #+ 0.5*DiceLoss(y_pred, y_true)
+    return 0.2 * get_loss("smp_soft_ce")(y_pred, y_true) + 0.8 * f1_loss(
+        torch.nn.functional.avg_pool2d(y_pred, kernel_size=16, stride=16),
+        torch.nn.functional.avg_pool2d(y_true.to(torch.float32), kernel_size=16, stride=16),
+    )  # + 0.5*DiceLoss(y_pred, y_true)
+
 
 def get_loss(name: str, device = None):
     loss_dict = {
         "bce": BCELoss,
         "reg_f1": reg_f1_loss,
+        "patch_f1": patch_f1_loss,
         "smp_dice": smp.losses.DiceLoss(mode="multiclass"),
         "smp_jaccard": smp.losses.JaccardLoss(mode="multiclass"),
         "smp_lovasz": smp.losses.LovaszLoss(

@@ -4,7 +4,7 @@ from sklearn.model_selection import KFold
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
-from roadseg.datasets.SegmentationDatasets import CIL23Dataset, dataset_map
+from roadseg.datasets.SegmentationDatasets import CIL23Dataset, OnepieceCILDataset, dataset_map
 
 
 def split(dataset, train=0.8):
@@ -35,24 +35,33 @@ def get_dataloaders(CFG, transforms):
         num_workers=CFG.num_workers,
         shuffle=True,
         pin_memory=True,
-        drop_last=False,
+        drop_last=False if "DeepLab" not in CFG.smp_model else True,
     )
     val_loader = DataLoader(
         val_dataset,
         batch_size=CFG.val_batch_size,
         num_workers=CFG.num_workers,
-        shuffle=True,
+        shuffle=True if not CFG.use_diffusion else False,
         pin_memory=True,
-        drop_last=False,
+        drop_last=True,
     )
 
     # k-fold split of finetuning datasets
-    comp_dataset = CIL23Dataset(CFG, transforms=transforms)
-    comp_dataset_notransforms = CIL23Dataset(CFG, transforms=None)
+    if CFG.onepiece:
+        comp_dataset = OnepieceCILDataset(CFG, transforms=transforms)
+        if CFG.use_diffusion and CFG.partial_diffusion:
+            comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=transforms)
+        else:
+            comp_dataset_notransforms = OnepieceCILDataset(CFG, transforms=None)
+    else:
+        comp_dataset = CIL23Dataset(CFG, transforms=transforms)
+        comp_dataset_notransforms = CIL23Dataset(CFG, transforms=None)
 
     comp_splits = []
     kf = KFold(
-        n_splits=CFG.n_finetuning_folds, random_state=42, shuffle=True
+        n_splits=CFG.n_finetuning_folds,
+        random_state=(42 if CFG.seed == -1 else CFG.seed),
+        shuffle=True,
     )  # these folds should not change! Even if the rest runs nondeterministically
     for train_index, val_index in kf.split(np.arange(len(comp_dataset))):
         train_subset = Subset(comp_dataset, train_index)
@@ -63,16 +72,16 @@ def get_dataloaders(CFG, transforms):
             num_workers=CFG.num_workers,
             shuffle=True,
             pin_memory=True,
-            drop_last=False,
+            drop_last=False if "DeepLab" not in CFG.smp_model else True,
         )
         # val dataset is shuffled to get random plots
         comp_val_loader = DataLoader(
             val_subset,
             batch_size=CFG.val_batch_size,
             num_workers=CFG.num_workers,
-            shuffle=True,
+            shuffle=True if not CFG.use_diffusion else False,
             pin_memory=True,
-            drop_last=False,
+            drop_last=False if "DeepLab" not in CFG.smp_model else True,
         )
         comp_splits.append((comp_train_loader, comp_val_loader))
     return train_loader, val_loader, comp_splits
