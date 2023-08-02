@@ -49,9 +49,19 @@ def main(CFG: Namespace):
         download_file_from_google_drive(file_id, destination)
         logging.info(f"Downloaded model to {destination}.")
 
+
+    if CFG.discriminator_download_drive_id:
+        file_id = CFG.discriminator_download_drive_id
+        destination = "discriminator.pth"
+        pathlib.Path(destination).parent.mkdir(parents=True, exist_ok=True)
+        logging.info(f"Downloading discriminator from {CFG.discriminator_download_drive_id} to {destination}")
+
+        download_file_from_google_drive(file_id, destination)
+        logging.info(f"Downloaded discriminator to {destination}.")
+
     if not(CFG.no_pretrain and CFG.no_finetune):
         model = build_model(CFG, num_classes=2).to(CFG.device)
-
+        
     if CFG.debug:
         imgs, msks = next(iter(train_loader))
         plot_batch(

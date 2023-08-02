@@ -6,6 +6,8 @@ import torch.nn as nn
 import torchmetrics
 import torchmetrics.classification
 
+from .losses import DiceDisc, PatchGANDiscriminatorLoss
+
 # @TODO: CLEANUP
 ##These all throws errors? Fixed versions below
 JaccardLoss = smp.losses.JaccardLoss(mode="multilabel")
@@ -66,7 +68,6 @@ def reg_f1_loss(y_pred, y_true):
         y_pred, y_true
     )  # + 0.5*DiceLoss(y_pred, y_true)
 
-
 def patch_f1_loss(y_pred, y_true):
     # return 0.5*BCELoss(y_pred, y_true) #+ 0.5*DiceLoss(y_pred, y_true)
     return 0.2 * get_loss("smp_soft_ce")(y_pred, y_true) + 0.8 * f1_loss(
@@ -75,7 +76,7 @@ def patch_f1_loss(y_pred, y_true):
     )  # + 0.5*DiceLoss(y_pred, y_true)
 
 
-def get_loss(name: str):
+def get_loss(name: str, device = None):
     loss_dict = {
         "bce": BCELoss,
         "reg_f1": reg_f1_loss,
@@ -87,6 +88,8 @@ def get_loss(name: str):
         ),  ##Per image does not change the result
         "smp_tversky": smp.losses.TverskyLoss(mode="multiclass"),
         "smp_soft_ce": smp.losses.SoftCrossEntropyLoss(smooth_factor=0.1),
+        "patchgan_disc" : PatchGANDiscriminatorLoss(discriminator_lr = 0.001, device=device, discriminator_init_weights="discriminator.pth"),
+        "patchgan_dice" : DiceDisc(discriminator_lr= 0.00005, device=device, discriminator_init_weights="discriminator.pth"),
     }
 
     loss = loss_dict.get(name, None)
@@ -127,13 +130,18 @@ class AccumulatedRecall:
         self.tn = 0
 
     def __call__(self, y_pred, y_true):
-        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
-            threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
-        )(y_pred.cpu(), y_true.cpu())
+
+        with torch.no_grad():
+            tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
+                threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
+            )(y_pred.cpu(), y_true.cpu())
         self.tp += tp
         self.fp += fp
         self.tn += tn
         self.fn += fn
+
+        if self.tp + self.fn == 0:
+            return torch.tensor(0.0)
 
         return self.tp / (self.tp + self.fn)
 
@@ -149,13 +157,18 @@ class AccumulatedPrecision:
         self.tn = 0
 
     def __call__(self, y_pred, y_true):
-        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
-            threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
-        )(y_pred.cpu(), y_true.cpu())
+
+        with torch.no_grad():
+            tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
+                threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
+            )(y_pred.cpu(), y_true.cpu())
         self.tp += tp
         self.fp += fp
         self.tn += tn
         self.fn += fn
+
+        if self.tp + self.fp == 0:
+            return torch.tensor(0.0)
 
         return self.tp / (self.tp + self.fp)
 
@@ -171,9 +184,11 @@ class AccumulatedF1:
         self.tn = 0
 
     def __call__(self, y_pred, y_true):
-        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
-            threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
-        )(y_pred.cpu(), y_true.cpu())
+
+        with torch.no_grad():
+            tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
+                threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
+            )(y_pred.cpu(), y_true.cpu())
         self.tp += tp
         self.fp += fp
         self.tn += tn
@@ -198,9 +213,12 @@ class CompF1:
     def __call__(self, y_pred, y_true):
         y_true_p = (self.pooling(y_true.to(torch.float)) > self.threshold).to(torch.long)
         y_pred_p = (self.pooling(y_pred.to(torch.float)) > self.threshold).to(torch.long)
-        tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
-            threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
-        )(y_pred_p.cpu(), y_true_p.cpu())
+
+        with torch.no_grad():
+            tp, fp, tn, fn, sup = torchmetrics.classification.BinaryStatScores(
+                threshold=0.5, multidim_average="global", ignore_index=None, validate_args=True
+            )(y_pred_p.cpu(), y_true_p.cpu())
+
         self.tp += tp
         self.fp += fp
         self.tn += tn
@@ -222,8 +240,13 @@ class IOU:
         current_batch_size = y_pred.shape[0]
         self.total_samples += current_batch_size
 
-        self.iou += current_batch_size * torchmetrics.classification.BinaryJaccardIndex()(
-            y_pred.cpu(), y_true.cpu()
-        )
+        with torch.no_grad():
+
+            self.iou += current_batch_size * torchmetrics.classification.BinaryJaccardIndex()(
+                y_pred.cpu(), y_true.cpu()
+            )
+
+        if self.total_samples == 0:
+            return torch.tensor(0.0)
 
         return self.iou / self.total_samples

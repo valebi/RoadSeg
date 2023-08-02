@@ -191,12 +191,17 @@ def build_model(CFG, num_classes):
             activation=None,
         )
     elif CFG.smp_model == "DeepLabV3+":
+        ##Only these fixed parameters are supported for now(by Ahmet's Code).
+        decoder_channels = 256
+        encoder_depth = 5
         model = smp.DeepLabV3Plus(
             encoder_name=CFG.smp_backbone,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
             encoder_weights=init_weights,  # "imagenet",     # use `imagenet` pre-trained weights for encoder initialization
             in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
             classes=num_classes,  # model output channels (number of classes in your dataset)
             activation=None,
+            decoder_channels=decoder_channels,
+            encoder_depth=encoder_depth,
         )
     else:
         raise NotImplementedError(f"Model {CFG.smp_model} not implemented.")
@@ -208,6 +213,7 @@ def build_model(CFG, num_classes):
     if CFG.no_data_parallel:
         return model
     model = nn.DataParallel(model)
+    
     return model
 
 
