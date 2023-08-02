@@ -1,3 +1,15 @@
+'''
+Reference: Lucidrains,
+  author = {lucidrains},
+  title = {med-seg-diff-pytorch},
+  year = {2013},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/lucidrains/med-seg-diff-pytorch}},
+  commit = {512eb49c2826437efc5cd151eae462d104fb2465}
+}
+'''
+
 import copy
 import math
 from collections import namedtuple
