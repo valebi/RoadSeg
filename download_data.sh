@@ -21,7 +21,7 @@ unzip -q ethz-cil-road-segmentation-2023.zip
 cd -
 kaggle datasets download valebi/hofmann-osm --unzip --path roadseg-download-openstreetmap
 kaggle datasets download valebi/google-roadseg --unzip --path google-roadseg
-#kaggle kernels output valebi/roadseg-download-openstreetmap --path roadseg-download-openstreetmap
+#kaggle kernels output valgitebi/roadseg-download-openstreetmap --path roadseg-download-openstreetmap
 kaggle datasets download valebi/esri-streetmap-tiles --unzip --path esri-streetmap-tiles
 kaggle datasets download selinnbaris/processed-bing-dataset --unzip --path processed-bing-dataset
 #kaggle kernels output ahmetalperozudogru/bingscrape-noarrow --path bingscrape-noarrow

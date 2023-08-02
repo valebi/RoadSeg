@@ -80,6 +80,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         choices=[
             "cil",
+            "onepiece-cil",
             "hofmann",
             "maptiler",
             "esri",
@@ -92,6 +93,20 @@ def parse_args() -> argparse.Namespace:
         help="Datasets to use for pretraining.",
     )
     parser.add_argument("--no_pretrain", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--no_finetune", action="store_true", help="Disable pretraining.")
+    parser.add_argument(
+        "--finetuned_weights_dir",
+        type=str,
+        default="logs",
+        help="Where to store the predictions. MUST'T CONTAIN ANY DIGIT!",
+    )
+    parser.add_argument("--tta", action="store_true", help="Disable pretraining.")
+    parser.add_argument("--tta_all_combinations", action="store_true", help="Disable pretraining.")
+    parser.add_argument(
+        "--onepiece",
+        action="store_true",
+        help="Whether to finetune on the pieced-together dataset.",
+    )
     parser.add_argument("--slim", action="store_true", help="Reduces no. decoder channels.")
     parser.add_argument(
         "--max_per_dataset",
@@ -105,6 +120,7 @@ def parse_args() -> argparse.Namespace:
         default=8,
         help="Number of workers for data loading. (torch)",
     )
+    parser.add_argument("--no_data_parallel", action="store_true", help="Disable dataparallel.")
     parser.add_argument("--no_aug", action="store_true", help="Disable augmentations.")
 
     # INFERENCE
@@ -162,11 +178,27 @@ def parse_args() -> argparse.Namespace:
         help="Decoder depth for pytorch-segmentation-models. Can only be 4 or 5. Image size must be divisible by 2^decoder_depth.",
     )
     parser.add_argument(
+        "--diffusion_timesteps",
+        type=int,
+        default=100,
+        help="Number of timesteps for diffusion models.",
+    )
+    parser.add_argument(
+        "--partial_diffusion",
+        action="store_true",
+        help="Whether to use partial labels as input to the diffusion process.",
+    )
+    parser.add_argument(
         "--smp_backbone",
         type=str,
         default="timm-regnety_080",
         # choices=["timm-regnety_080", "dummy-unet", "efficientnet-b5"],
         help="Backbone for pytorch-segmentation-models",
+    )
+    parser.add_argument(
+        "--use_diffusion",
+        action="store_true",
+        help="Build the smp model within a DiffusionAdapter.",
     )
     parser.add_argument(
         "--train_batch_size",
@@ -213,6 +245,7 @@ def parse_args() -> argparse.Namespace:
         choices=[
             "bce",
             "reg_f1",
+            "patch_f1",
             "smp_dice",
             "smp_jaccard",
             "smp_lovasz",
@@ -230,6 +263,7 @@ def parse_args() -> argparse.Namespace:
         choices=[
             "bce",
             "reg_f1",
+            "patch_f1",
             "smp_dice",
             "smp_jaccard",
             "smp_lovasz",
@@ -257,6 +291,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=5,
         help="Number of folds for finetuning.",
+    )
+    parser.add_argument(
+        "--only_fold",
+        type=int,
+        default=-1,
+        help="Will skip all other finetuning folds if set != -1",
     )
     parser.add_argument(
         "--scheduler",

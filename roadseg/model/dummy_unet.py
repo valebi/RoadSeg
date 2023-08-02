@@ -84,6 +84,4 @@ class UNet(nn.Module):
 
 def build_model(CFG, num_classes):
     model = UNet(num_classes, 3)
-    model.to(CFG.device)
-    model = nn.DataParallel(model)
     return model
